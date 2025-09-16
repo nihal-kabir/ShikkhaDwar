@@ -31,7 +31,8 @@ def take_quiz(quiz_id):
 @assessments_bp.route('/quiz/<int:quiz_id>/submit', methods=['POST'])
 @login_required
 def submit_quiz(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
+    # Validate quiz exists
+    Quiz.query.get_or_404(quiz_id)
     
     # Get current attempt number
     attempt_number = QuizAttempt.query.filter_by(user_id=session['user_id'], quiz_id=quiz_id).count() + 1

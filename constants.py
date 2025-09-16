@@ -23,6 +23,7 @@ TEMPLATE_LOGIN = 'auth/login.html'
 TEMPLATE_REGISTER = 'auth/register.html'
 TEMPLATE_DASHBOARD_STUDENT = 'student/dashboard.html'
 TEMPLATE_DASHBOARD_INSTRUCTOR = 'instructor/dashboard.html'
+TEMPLATE_INSTRUCTOR_DASHBOARD = 'instructor/dashboard.html'
 TEMPLATE_COURSE_CATALOG = 'courses/catalog.html'
 TEMPLATE_COURSE_DETAIL = 'courses/detail.html'
 TEMPLATE_LESSON_VIEW = 'lessons/view.html'
@@ -32,6 +33,12 @@ TEMPLATE_GRADES = 'student/grades.html'
 TEMPLATE_CERTIFICATE = 'student/certificate.html'
 TEMPLATE_CREATE_COURSE = 'instructor/create_course.html'
 TEMPLATE_MANAGE_COURSE = 'instructor/manage_course.html'
+
+# Route Endpoints
+ENDPOINT_INSTRUCTOR_MANAGE_COURSE = 'instructor.manage_course'
+ENDPOINT_INSTRUCTOR_DASHBOARD = 'instructor.dashboard'
+ENDPOINT_STUDENT_DASHBOARD = 'student.dashboard'
+ENDPOINT_LOGIN = 'auth.login'
 
 # Route Paths
 ROUTE_LOGIN = '/auth/login'

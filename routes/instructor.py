@@ -2,6 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models import User, Course, Lesson, Quiz, Question, Resource, Enrollment, Announcement, QuizAttempt, db
 from werkzeug.utils import secure_filename
 from functools import wraps
+from constants import (
+    MSG_ACCESS_DENIED, MSG_INSTRUCTOR_REQUIRED, ENDPOINT_INSTRUCTOR_MANAGE_COURSE, 
+    ENDPOINT_INSTRUCTOR_DASHBOARD, TEMPLATE_INSTRUCTOR_DASHBOARD, TEMPLATE_CREATE_COURSE, 
+    TEMPLATE_MANAGE_COURSE
+)
 import os
 import json
 
@@ -22,7 +27,7 @@ def instructor_required(f):
             return redirect(url_for('auth.login'))
         user = User.query.get(session['user_id'])
         if not user or user.role != 'instructor':
-            flash('Access denied. Instructor privileges required.', 'error')
+            flash(MSG_INSTRUCTOR_REQUIRED, 'error')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -55,7 +60,7 @@ def create_course():
         db.session.commit()
         
         flash('Course created successfully!', 'success')
-        return redirect(url_for('instructor.manage_course', course_id=course.id))
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course.id))
     
     return render_template('instructor/create_course.html')
 
@@ -66,8 +71,8 @@ def manage_course(course_id):
     
     # Check if instructor owns this course
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     lessons = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order_num).all()
     quizzes = Quiz.query.filter_by(course_id=course_id).all()
@@ -81,8 +86,8 @@ def create_lesson(course_id):
     course = Course.query.get_or_404(course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
         # Get next order number
@@ -102,7 +107,7 @@ def create_lesson(course_id):
         db.session.commit()
         
         flash('Lesson created successfully!', 'success')
-        return redirect(url_for('instructor.manage_course', course_id=course_id))
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
     
     return render_template('instructor/create_lesson.html', course=course)
 
@@ -112,8 +117,8 @@ def create_quiz(course_id):
     course = Course.query.get_or_404(course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
         quiz = Quiz(
@@ -140,8 +145,8 @@ def manage_quiz(quiz_id):
     course = Course.query.get(quiz.course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     questions = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order_num).all()
     return render_template('instructor/manage_quiz.html', quiz=quiz, questions=questions)
@@ -153,8 +158,8 @@ def create_question(quiz_id):
     course = Course.query.get(quiz.course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
         # Get next order number
@@ -195,8 +200,8 @@ def create_announcement(course_id):
     course = Course.query.get_or_404(course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
         announcement = Announcement(
@@ -211,7 +216,7 @@ def create_announcement(course_id):
         db.session.commit()
         
         flash('Announcement created successfully!', 'success')
-        return redirect(url_for('instructor.manage_course', course_id=course_id))
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
     
     return render_template('instructor/create_announcement.html', course=course)
 
@@ -221,8 +226,8 @@ def course_analytics(course_id):
     course = Course.query.get_or_404(course_id)
     
     if course.instructor_id != session['user_id']:
-        flash('Access denied.', 'error')
-        return redirect(url_for('instructor.dashboard'))
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     # Get enrollment statistics
     total_enrollments = Enrollment.query.filter_by(course_id=course_id).count()
