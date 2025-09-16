@@ -1,5 +1,5 @@
 """
-Database initialization script for University LMS
+Database initialization script for ShikkhaDwar LMS
 Run this script to create the database and sample data
 """
 
@@ -11,19 +11,26 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app import app
 from models import db, User, Course, Lesson, Quiz, Question, Enrollment, Progress, Announcement
 from werkzeug.security import generate_password_hash
+from config import Config
+from constants import (
+    CATEGORY_COMPUTER_SCIENCE, CATEGORY_MATHEMATICS, ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_STUDENT,
+    DEFAULT_ADMIN_PASSWORD, DEFAULT_INSTRUCTOR_PASSWORD, DEFAULT_STUDENT_PASSWORD
+)
 import json
 
 def test_mysql_connection():
     """Test MySQL connection and create database if needed"""
     try:
+        # Use configuration from config.py instead of hardcoded values
+        config = Config()
         connection = pymysql.connect(
-            host='localhost',
-            user='root',
-            password='_03nihal.k'
+            host=config.DB_HOST,
+            user=config.DB_USER,
+            password=config.DB_PASSWORD
         )
         cursor = connection.cursor()
-        cursor.execute('CREATE DATABASE IF NOT EXISTS lms_db')
-        cursor.execute('USE lms_db')
+        cursor.execute(f'CREATE DATABASE IF NOT EXISTS {config.DB_NAME}')
+        cursor.execute(f'USE {config.DB_NAME}')
         connection.commit()
         connection.close()
         print("MySQL connection successful and database created!")
@@ -40,46 +47,46 @@ def create_sample_data():
     admin = User(
         username='admin',
         email='admin@university.edu',
-        password_hash=generate_password_hash('admin123'),
+        password_hash=generate_password_hash(DEFAULT_ADMIN_PASSWORD),
         first_name='Admin',
         last_name='User',
-        role='admin'
+        role=ROLE_ADMIN
     )
     
     instructor1 = User(
         username='prof_smith',
         email='smith@university.edu',
-        password_hash=generate_password_hash('password123'),
+        password_hash=generate_password_hash(DEFAULT_INSTRUCTOR_PASSWORD),
         first_name='John',
         last_name='Smith',
-        role='instructor'
+        role=ROLE_INSTRUCTOR
     )
     
     instructor2 = User(
         username='prof_jones',
         email='jones@university.edu',
-        password_hash=generate_password_hash('password123'),
+        password_hash=generate_password_hash(DEFAULT_INSTRUCTOR_PASSWORD),
         first_name='Sarah',
         last_name='Jones',
-        role='instructor'
+        role=ROLE_INSTRUCTOR
     )
     
     student1 = User(
         username='student1',
         email='student1@university.edu',
-        password_hash=generate_password_hash('password123'),
+        password_hash=generate_password_hash(DEFAULT_STUDENT_PASSWORD),
         first_name='Alice',
         last_name='Johnson',
-        role='student'
+        role=ROLE_STUDENT
     )
     
     student2 = User(
         username='student2',
         email='student2@university.edu',
-        password_hash=generate_password_hash('password123'),
+        password_hash=generate_password_hash(DEFAULT_STUDENT_PASSWORD),
         first_name='Bob',
         last_name='Davis',
-        role='student'
+        role=ROLE_STUDENT
     )
     
     db.session.add_all([admin, instructor1, instructor2, student1, student2])
@@ -89,7 +96,7 @@ def create_sample_data():
     course1 = Course(
         title='Introduction to Python Programming',
         description='Learn the fundamentals of Python programming including variables, functions, loops, and object-oriented programming. Perfect for beginners!',
-        category='Computer Science',
+        category=CATEGORY_COMPUTER_SCIENCE,
         instructor_id=instructor1.id,
         is_published=True,
         duration_weeks=8
@@ -98,7 +105,7 @@ def create_sample_data():
     course2 = Course(
         title='Web Development with Flask',
         description='Build dynamic web applications using Flask framework. Learn about routing, templates, databases, and deployment.',
-        category='Computer Science',
+        category=CATEGORY_COMPUTER_SCIENCE,
         instructor_id=instructor1.id,
         is_published=True,
         duration_weeks=10
@@ -107,7 +114,7 @@ def create_sample_data():
     course3 = Course(
         title='Data Structures and Algorithms',
         description='Comprehensive course covering fundamental data structures and algorithms essential for computer science.',
-        category='Computer Science',
+        category=CATEGORY_COMPUTER_SCIENCE,
         instructor_id=instructor2.id,
         is_published=True,
         duration_weeks=12

@@ -6,13 +6,12 @@ from datetime import datetime, timedelta
 import os
 import json
 from functools import wraps
+from config import config
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:_03nihal.k@localhost/lms_db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+# Load configuration based on environment
+config_name = os.getenv('FLASK_ENV', 'development')
+app.config.from_object(config[config_name])
 
 # Create uploads directory if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

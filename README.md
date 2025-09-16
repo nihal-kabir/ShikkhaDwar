@@ -1,4 +1,94 @@
-# University Learning Management System (LMS)
+# ShikkhaDwar - Learning Management System
+
+A comprehensive Learning Management System built with Flask, featuring secure authentication, course management, content delivery, assessments, and progress tracking.
+
+## 🛡️ Security Improvements
+
+The codebase has been enhanced with important security and code quality improvements:
+
+### 1. **Environment-based Configuration**
+- Removed hardcoded secrets from source code
+- Added secure configuration management with `config.py`
+- Uses environment variables for sensitive data
+- Provides `.env.example` template for local development
+
+### 2. **Database Security**
+- Eliminated hardcoded database passwords
+- Secure connection string management
+- Environment-based database configuration
+
+### 3. **Code Quality Enhancements**
+- **Constants Management**: Centralized all string literals in `constants.py`
+- **Timezone-aware Datetime**: Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)`
+- **Removed Code Duplication**: Eliminated duplicate strings for better maintainability
+- **Clean Imports**: Organized imports and removed unused variables
+
+### 4. **Configuration Files**
+- **`config.py`**: Manages different environments (development, production, testing)
+- **`constants.py`**: Central location for all application constants
+- **`.env.example`**: Template for environment variables
+
+## 🚀 Quick Start
+
+### 1. Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your actual values
+# CRITICAL: Update these before deployment
+SECRET_KEY=your-super-secret-key-here
+DB_PASSWORD=your_database_password_here
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Database Setup
+```bash
+# Initialize database with sample data
+python init_db.py
+```
+
+### 4. Run Application
+```bash
+python app.py
+```
+
+## 🔐 Security Configuration
+
+### Environment Variables (`.env`)
+```env
+# Flask Configuration
+SECRET_KEY=your-super-secret-key-here-change-this-in-production
+FLASK_ENV=development
+
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_database_password_here
+DB_NAME=lms_db
+```
+
+### Production Deployment
+For production deployment:
+1. Set `FLASK_ENV=production`
+2. Use a strong, unique `SECRET_KEY`
+3. Secure your database credentials
+4. Never commit `.env` to version control
+
+## 🔑 Default Login Credentials
+
+**Development Environment Only:**
+- **Admin**: `admin` / `SecureAdmin2024!`
+- **Instructor**: `prof_smith` / `SecureInstructor2024!`
+- **Student**: `student1` / `SecureStudent2024!`
+
+⚠️ **Important**: Change these credentials before deployment to production!
+
+## University Learning Management System (LMS)
 
 A comprehensive Learning Management System built with Flask, MySQL, and modern web technologies.
 

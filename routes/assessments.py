@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models import Quiz, Question, QuizAttempt, Grade, User, db
 from functools import wraps
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 assessments_bp = Blueprint('assessments', __name__)
 
@@ -41,7 +41,7 @@ def submit_quiz(quiz_id):
         user_id=session['user_id'],
         quiz_id=quiz_id,
         attempt_number=attempt_number,
-        submitted_at=datetime.utcnow(),
+        submitted_at=datetime.now(timezone.utc),
         answers=json.dumps(dict(request.form))
     )
     
