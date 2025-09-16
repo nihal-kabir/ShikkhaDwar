@@ -1,0 +1,133 @@
+{%{% block title %}Grades - ShikkhaDwar{% endblock %}
+
+{% block content %}tends "base.html" %}
+
+{% block title %}My Grades - University LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar"></i> My Grades</h2>
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if attempts %}
+    <div class="row">
+        {% for attempt in attempts %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>{{ attempt.quiz.title }}</h6>
+                        <small class="text-muted">{{ attempt.quiz.course.title }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="{% if attempt.score and attempt.max_score %}
+                                    {% if (attempt.score / attempt.max_score) >= 0.7 %}text-success
+                                    {% elif (attempt.score / attempt.max_score) >= 0.5 %}text-warning
+                                    {% else %}text-danger
+                                    {% endif %}
+                                {% endif %}">
+                                    {% if attempt.score is not none %}
+                                        {{ attempt.score|round(1) }}/{{ attempt.max_score|round(1) }}
+                                    {% else %}
+                                        <span class="text-muted">Pending</span>
+                                    {% endif %}
+                                </h4>
+                                <small class="text-muted">Score</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="{% if attempt.score and attempt.max_score %}
+                                    {% if (attempt.score / attempt.max_score) >= 0.7 %}text-success
+                                    {% elif (attempt.score / attempt.max_score) >= 0.5 %}text-warning
+                                    {% else %}text-danger
+                                    {% endif %}
+                                {% endif %}">
+                                    {% if attempt.score is not none and attempt.max_score %}
+                                        {{ "%.0f"|format((attempt.score / attempt.max_score) * 100) }}%
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </h4>
+                                <small class="text-muted">Percentage</small>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <ul class="list-unstyled small">
+                            <li><strong>Attempt:</strong> {{ attempt.attempt_number }}</li>
+                            <li><strong>Submitted:</strong> {{ attempt.submitted_at.strftime('%B %d, %Y at %I:%M %p') if attempt.submitted_at else 'In Progress' }}</li>
+                            <li><strong>Status:</strong> 
+                                {% if attempt.is_graded %}
+                                    <span class="badge bg-success">Graded</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending Review</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                        
+                        {% if attempt.grade and attempt.grade.feedback %}
+                            <div class="mt-2">
+                                <small class="text-muted">Instructor Feedback:</small>
+                                <p class="small">{{ attempt.grade.feedback }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Grade Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-chart-line"></i> Grade Statistics</h6>
+                </div>
+                <div class="card-body">
+                    {% set graded_attempts = attempts|selectattr('is_graded')|list %}
+                    {% if graded_attempts %}
+                        {% set total_score = graded_attempts|sum(attribute='score') %}
+                        {% set total_max = graded_attempts|sum(attribute='max_score') %}
+                        {% set avg_percentage = (total_score / total_max * 100) if total_max > 0 else 0 %}
+                        
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h4 class="text-primary">{{ graded_attempts|length }}</h4>
+                                <small class="text-muted">Completed Quizzes</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-success">{{ "%.1f"|format(avg_percentage) }}%</h4>
+                                <small class="text-muted">Average Score</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-info">{{ graded_attempts|selectattr('score')|map(attribute='score')|max|round(1) if graded_attempts else 0 }}</h4>
+                                <small class="text-muted">Highest Score</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ attempts|length - graded_attempts|length }}</h4>
+                                <small class="text-muted">Pending Review</small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">No graded assessments yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-chart-bar fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No grades yet</h4>
+        <p class="text-muted">Complete some quizzes and assignments to see your grades here.</p>
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

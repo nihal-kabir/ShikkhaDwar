@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate - ShikkhaDwar{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="certificate">
+            <div class="certificate-header">
+                <i class="fas fa-award"></i>
+            </div>
+            <h1 class="certificate-header">Certificate of Completion</h1>
+            
+            <div class="certificate-text">
+                <p>This is to certify that</p>
+                <h2 class="text-primary">{{ certificate.user.first_name }} {{ certificate.user.last_name }}</h2>
+                <p>has successfully completed the course</p>
+                <h3>{{ certificate.course.title }}</h3>
+                <p>offered by University LMS</p>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <p><strong>Date of Completion:</strong><br>
+                    {{ certificate.issued_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Certificate ID:</strong><br>
+                    {{ certificate.certificate_id }}</p>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <p><strong>Instructor:</strong><br>
+                    {{ certificate.course.instructor.first_name }} {{ certificate.course.instructor.last_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Course Duration:</strong><br>
+                    {{ certificate.course.duration_weeks }} weeks</p>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button onclick="window.print()" class="btn btn-primary me-2">
+                    <i class="fas fa-print"></i> Print Certificate
+                </button>
+                <button id="copyLinkBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-link"></i> Copy Share Link
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('copyLinkBtn').addEventListener('click', function() {
+    var shareLink = window.location.href;
+    navigator.clipboard.writeText(shareLink).then(function() {
+        alert('Share link copied to clipboard!');
+    }).catch(function() {
+        // Fallback for older browsers
+        var textArea = document.createElement('textarea');
+        textArea.value = shareLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Share link copied to clipboard!');
+    });
+});
+
+// Print styles
+window.addEventListener('beforeprint', function() {
+    document.body.style.background = 'white';
+});
+</script>
+
+<style media="print">
+    .btn, .navbar, footer {
+        display: none !important;
+    }
+    
+    .certificate {
+        border: 3px solid #007bff !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 2rem !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+</style>
+{% endblock %}

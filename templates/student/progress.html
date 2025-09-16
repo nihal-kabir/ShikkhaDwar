@@ -1,0 +1,127 @@
+{%{% block title %}Progress - ShikkhaDwar{% endblock %}
+
+{% block content %}tends "base.html" %}
+
+{% block title %}Course Progress - University LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-line"></i> {{ course.title }} - Progress</h2>
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Course Lessons</h5>
+            </div>
+            <div class="card-body">
+                {% if lessons %}
+                    {% for week in range(1, course.duration_weeks + 1) %}
+                        {% set week_lessons = lessons|selectattr('week_number', 'equalto', week)|list %}
+                        {% if week_lessons %}
+                            <h6 class="mb-3 mt-4"><i class="fas fa-calendar-week"></i> Week {{ week }}</h6>
+                            <div class="list-group mb-3">
+                                {% for lesson in week_lessons %}
+                                    {% set progress = progress_data.get(lesson.id) %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                Lesson {{ lesson.order_num }}: {{ lesson.title }}
+                                                {% if progress and progress.completed %}
+                                                    <span class="badge bg-success ms-2">
+                                                        <i class="fas fa-check"></i> Completed
+                                                    </span>
+                                                {% endif %}
+                                            </h6>
+                                            {% if progress and progress.last_accessed %}
+                                                <small class="text-muted">
+                                                    Last accessed: {{ progress.last_accessed.strftime('%B %d, %Y at %I:%M %p') }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fas fa-play"></i> 
+                                                {% if progress and progress.completed %}Resume{% else %}Start{% endif %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No lessons available</h5>
+                        <p class="text-muted">The instructor hasn't added any lessons yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-pie"></i> Progress Overview</h6>
+            </div>
+            <div class="card-body">
+                {% set completed_count = progress_data.values()|selectattr('completed')|list|length %}
+                {% set total_count = lessons|length %}
+                {% set progress_percentage = (completed_count / total_count * 100) if total_count > 0 else 0 %}
+                
+                <div class="text-center mb-3">
+                    <h4 class="text-primary">{{ "%.0f"|format(progress_percentage) }}%</h4>
+                    <small class="text-muted">Complete</small>
+                </div>
+                
+                <div class="mb-3">
+                    <progress class="progress w-100" value="{{ progress_percentage }}" max="100" style="height: 10px;">
+                        {{ "%.0f"|format(progress_percentage) }}%
+                    </progress>
+                </div>
+                
+                <ul class="list-unstyled small">
+                    <li><strong>Completed:</strong> {{ completed_count }} / {{ total_count }} lessons</li>
+                    <li><strong>Duration:</strong> {{ course.duration_weeks }} weeks</li>
+                </ul>
+                
+                {% if progress_percentage == 100 %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-trophy"></i> Course completed!
+                    </div>
+                    <a href="{{ url_for('student.generate_certificate', course_id=course.id) }}" 
+                       class="btn btn-success w-100">
+                        <i class="fas fa-certificate"></i> Get Certificate
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6><i class="fas fa-clock"></i> Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                {% set recent_progress = progress_data.values()|selectattr('last_accessed')|sort(attribute='last_accessed', reverse=true)|list %}
+                {% if recent_progress %}
+                    {% for progress in recent_progress[:5] %}
+                        <div class="mb-2">
+                            <small class="text-muted">{{ progress.last_accessed.strftime('%m/%d') }}</small><br>
+                            <small>{{ progress.lesson.title }}</small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <small class="text-muted">No recent activity</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

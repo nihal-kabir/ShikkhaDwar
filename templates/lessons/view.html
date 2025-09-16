@@ -1,0 +1,145 @@
+{%{% block title %}Lesson: {{ lesson.title }} - ShikkhaDwar{% endblock %}
+
+{% block content %}tends "base.html" %}
+
+{% block title %}{{ lesson.title }} - University LMS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-play-circle"></i> {{ lesson.title }}</h5>
+                <span class="badge bg-primary">Week {{ lesson.week_number }}</span>
+            </div>
+            <div class="card-body">
+                {% if lesson.video_url %}
+                    <div class="video-container mb-4">
+                        {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
+                            {% set video_id = lesson.video_url.split('/')[-1].split('?')[0] %}
+                            {% if 'watch?v=' in lesson.video_url %}
+                                {% set video_id = lesson.video_url.split('watch?v=')[1].split('&')[0] %}
+                            {% endif %}
+                            <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
+                                    title="{{ lesson.title }} - Video Lesson"
+                                    style="border: none;" allowfullscreen></iframe>
+                        {% else %}
+                            <video controls class="w-100" 
+                                   title="{{ lesson.title }} - Video Lesson"
+                                   aria-label="Video lesson: {{ lesson.title }}">
+                                <source src="{{ lesson.video_url }}" type="video/mp4">
+                                <track kind="captions" src="#" srclang="en" label="English" default>
+                                <p>Your browser does not support the video tag. 
+                                   <a href="{{ lesson.video_url }}">Download the video</a> instead.</p>
+                            </video>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                {% if lesson.content %}
+                    <div class="lesson-content">
+                        {{ lesson.content|safe }}
+                    </div>
+                {% endif %}
+                
+                {% if lesson.resources %}
+                    <div class="mt-4">
+                        <h6><i class="fas fa-download"></i> Downloadable Resources</h6>
+                        <div class="list-group">
+                            {% for resource in lesson.resources %}
+                                <a href="{{ url_for('lessons.download_resource', resource_id=resource.id) }}" 
+                                   class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file"></i> {{ resource.title }}
+                                    <small class="text-muted">({{ resource.file_type }})</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if embedded_quizzes %}
+                    <div class="mt-4">
+                        <h6><i class="fas fa-question-circle"></i> Lesson Quiz</h6>
+                        {% for quiz in embedded_quizzes %}
+                            <div class="alert alert-info">
+                                <h6>{{ quiz.title }}</h6>
+                                <p>{{ quiz.description }}</p>
+                                <a href="{{ url_for('assessments.take_quiz', quiz_id=quiz.id) }}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-play"></i> Take Quiz
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <form method="POST" action="{{ url_for('lessons.complete_lesson', lesson_id=lesson.id) }}">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Mark as Complete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle"></i> Lesson Info</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>Course:</strong> {{ lesson.course.title }}</li>
+                    <li><strong>Week:</strong> {{ lesson.week_number }}</li>
+                    <li><strong>Lesson:</strong> {{ lesson.order_num }}</li>
+                    {% if lesson.resources %}
+                        <li><strong>Resources:</strong> {{ lesson.resources|length }}</li>
+                    {% endif %}
+                </ul>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('student.view_progress', course_id=lesson.course.id) }}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Course
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% if lesson.course.lessons|length > 1 %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-list"></i> Other Lessons</h6>
+                </div>
+                <div class="card-body">
+                    {% for other_lesson in lesson.course.lessons|sort(attribute='order_num') %}
+                        {% if other_lesson.id != lesson.id %}
+                            <a href="{{ url_for('lessons.view_lesson', lesson_id=other_lesson.id) }}" 
+                               class="d-block mb-2 text-decoration-none">
+                                <small class="text-muted">Lesson {{ other_lesson.order_num }}:</small><br>
+                                {{ other_lesson.title }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Track lesson viewing time
+let startTime = Date.now();
+window.addEventListener('beforeunload', function() {
+    let timeSpent = Math.floor((Date.now() - startTime) / 1000);
+    if (timeSpent > 10) { // Only track if more than 10 seconds
+        navigator.sendBeacon('{{ url_for("lessons.track_time", lesson_id=lesson.id) }}', 
+                            JSON.stringify({time_spent: timeSpent}));
+    }
+});
+</script>
+{% endblock %}

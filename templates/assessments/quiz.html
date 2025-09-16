@@ -1,0 +1,127 @@
+{%{% block title %}Quiz: {{ quiz.title }} - ShikkhaDwar{% endblock %}
+
+{% block content %}tends "base.html" %}
+
+{% block title %}{{ quiz.title }} - University LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
+                {% if quiz.time_limit %}
+                    <span id="quiz-timer" class="badge bg-warning fs-6" data-time-limit="{{ quiz.time_limit }}">
+                        {{ quiz.time_limit }}:00
+                    </span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if quiz.description %}
+                    <div class="alert alert-info">
+                        {{ quiz.description }}
+                    </div>
+                {% endif %}
+                
+                <form id="quiz-form" method="POST" action="{{ url_for('assessments.submit_quiz', quiz_id=quiz.id) }}">
+                    {% for question in questions %}
+                        <div class="quiz-question">
+                            <h6>Question {{ loop.index }} ({{ question.points }} point{{ 's' if question.points != 1 else '' }})</h6>
+                            <p>{{ question.question_text }}</p>
+                            
+                            {% if question.question_type == 'mcq' %}
+                                {% set options = question.options|from_json if question.options else {} %}
+                                {% for key, value in options.items() %}
+                                    <div class="quiz-option">
+                                        <label>
+                                            <input type="radio" name="question_{{ question.id }}" value="{{ key }}" required>
+                                            {{ key }}. {{ value }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            
+                            {% elif question.question_type == 'true_false' %}
+                                <div class="quiz-option">
+                                    <label>
+                                        <input type="radio" name="question_{{ question.id }}" value="true" required>
+                                        True
+                                    </label>
+                                </div>
+                                <div class="quiz-option">
+                                    <label>
+                                        <input type="radio" name="question_{{ question.id }}" value="false" required>
+                                        False
+                                    </label>
+                                </div>
+                            
+                            {% elif question.question_type == 'short_answer' %}
+                                <textarea name="question_{{ question.id }}" class="form-control" rows="3" 
+                                         placeholder="Enter your answer..." required></textarea>
+                            
+                            {% elif question.question_type == 'essay' %}
+                                <textarea name="question_{{ question.id }}" class="form-control" rows="6" 
+                                         placeholder="Write your essay response..." required></textarea>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Submit Quiz
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Prevent form resubmission
+document.getElementById('quiz-form').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+});
+
+// Auto-save answers to localStorage
+const form = document.getElementById('quiz-form');
+const inputs = form.querySelectorAll('input, textarea');
+
+// Load saved answers
+inputs.forEach(function(input) {
+    const savedValue = localStorage.getItem('quiz_{{ quiz.id }}_' + input.name);
+    if (savedValue) {
+        if (input.type === 'radio') {
+            if (input.value === savedValue) {
+                input.checked = true;
+            }
+        } else {
+            input.value = savedValue;
+        }
+    }
+});
+
+// Save answers on change
+inputs.forEach(function(input) {
+    input.addEventListener('change', function() {
+        localStorage.setItem('quiz_{{ quiz.id }}_' + this.name, this.value);
+    });
+});
+
+// Clear saved answers on submit
+form.addEventListener('submit', function() {
+    inputs.forEach(function(input) {
+        localStorage.removeItem('quiz_{{ quiz.id }}_' + input.name);
+    });
+});
+
+// Warning before leaving page
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = 'Are you sure you want to leave? Your progress may be lost.';
+});
+</script>
+{% endblock %}

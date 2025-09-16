@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Course - ShikkhaDwar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cog"></i> Manage Course: {{ course.title }}</h2>
+    <div>
+        <a href="{{ url_for('instructor.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <a href="{{ url_for('instructor.course_analytics', course_id=course.id) }}" class="btn btn-info">
+            <i class="fas fa-chart-bar"></i> Analytics
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Course Info -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-info-circle"></i> Course Information</h5>
+                {% if course.is_published %}
+                    <span class="badge bg-success">Published</span>
+                {% else %}
+                    <span class="badge bg-warning">Draft</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> {{ course.description or 'No description provided' }}</p>
+                <p><strong>Category:</strong> {{ course.category or 'Uncategorized' }}</p>
+                <p><strong>Duration:</strong> {{ course.duration_weeks }} weeks</p>
+                <p><strong>Created:</strong> {{ course.created_at.strftime('%B %d, %Y') }}</p>
+                
+                <div class="mt-3">
+                    {% if not course.is_published %}
+                        <button class="btn btn-success">
+                            <i class="fas fa-upload"></i> Publish Course
+                        </button>
+                    {% else %}
+                        <button class="btn btn-warning">
+                            <i class="fas fa-eye-slash"></i> Unpublish Course
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lessons -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-play-circle"></i> Course Lessons ({{ lessons|length }})</h5>
+                <a href="{{ url_for('instructor.create_lesson', course_id=course.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Lesson
+                </a>
+            </div>
+            <div class="card-body">
+                {% if lessons %}
+                    <div class="list-group">
+                        {% for lesson in lessons %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Lesson {{ lesson.order_num }}: {{ lesson.title }}</h6>
+                                    <small class="text-muted">Week {{ lesson.week_number }}</small>
+                                    {% if lesson.video_url %}
+                                        <span class="badge bg-primary ms-2">Video</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No lessons created yet. Add your first lesson to get started!</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quizzes -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-question-circle"></i> Course Quizzes ({{ quizzes|length }})</h5>
+                <a href="{{ url_for('instructor.create_quiz', course_id=course.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Quiz
+                </a>
+            </div>
+            <div class="card-body">
+                {% if quizzes %}
+                    <div class="list-group">
+                        {% for quiz in quizzes %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ quiz.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ quiz.questions|length }} questions
+                                        {% if quiz.time_limit %} • {{ quiz.time_limit }} minutes{% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-cog"></i> Manage
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No quizzes created yet. Add assessments to test student knowledge!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-pie"></i> Course Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ enrollments|length }}</h4>
+                        <small class="text-muted">Students</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success">{{ lessons|length }}</h4>
+                        <small class="text-muted">Lessons</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">{{ quizzes|length }}</h4>
+                        <small class="text-muted">Quizzes</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ course.duration_weeks }}</h4>
+                        <small class="text-muted">Weeks</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enrolled Students -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-users"></i> Enrolled Students</h6>
+            </div>
+            <div class="card-body">
+                {% if enrollments %}
+                    {% for enrollment in enrollments[:5] %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ enrollment.user.first_name }} {{ enrollment.user.last_name }}</span>
+                            <small class="text-muted">{{ enrollment.enrolled_at.strftime('%m/%d/%y') }}</small>
+                        </div>
+                    {% endfor %}
+                    {% if enrollments|length > 5 %}
+                        <small class="text-muted">And {{ enrollments|length - 5 }} more...</small>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted small">No students enrolled yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('instructor.create_announcement', course_id=course.id) }}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-bullhorn"></i> Create Announcement
+                    </a>
+                    <a href="{{ url_for('assessments.gradebook', course_id=course.id) }}" 
+                       class="btn btn-outline-success">
+                        <i class="fas fa-clipboard-check"></i> View Gradebook
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
