@@ -79,4 +79,4 @@ def gradebook(course_id):
     quizzes = Quiz.query.filter_by(course_id=course_id).all()
     attempts = QuizAttempt.query.join(Quiz).filter(Quiz.course_id == course_id).all()
     
-    return render_template('assessments/gradebook.html', quizzes=quizzes, attempts=attempts)
+    return render_template('assessments/gradebook.html', quizzes=quizzes, attempts=attempts, course_id=course_id)

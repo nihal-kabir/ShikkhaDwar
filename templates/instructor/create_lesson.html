@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Create Lesson - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> Create New Lesson</h2>
+                <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Course
+                </a>
+            </div>
+
+            <!-- Course Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-book"></i> {{ course.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ course.description }}</p>
+                </div>
+            </div>
+
+            <!-- Create Lesson Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i> Lesson Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="title">Lesson Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="Enter lesson title">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="content">Lesson Content *</label>
+                                    <textarea class="form-control" id="content" name="content" rows="10" required 
+                                              placeholder="Enter lesson content (supports HTML)"></textarea>
+                                    <small class="form-text text-muted">You can use HTML tags for formatting.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="video_url">Video URL (Optional)</label>
+                                    <input type="url" class="form-control" id="video_url" name="video_url" 
+                                           placeholder="https://youtube.com/watch?v=...">
+                                    <small class="form-text text-muted">YouTube, Vimeo, or direct video links supported.</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="order_index">Lesson Order</label>
+                                    <input type="number" class="form-control" id="order_index" name="order_index" 
+                                           min="1" value="1" required>
+                                    <small class="form-text text-muted">Order in which this lesson appears in the course.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="duration">Duration (minutes)</label>
+                                    <input type="number" class="form-control" id="duration" name="duration" 
+                                           min="1" placeholder="30">
+                                    <small class="form-text text-muted">Estimated time to complete this lesson.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="resources">Upload Resources (Optional)</label>
+                                    <input type="file" class="form-control-file" id="resources" name="resources" 
+                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
+                                    <small class="form-text text-muted">PDF, Word, PowerPoint, or text files.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="is_preview" name="is_preview">
+                                    <label class="form-check-label" for="is_preview">
+                                        Preview Lesson
+                                    </label>
+                                    <small class="form-text text-muted">Allow non-enrolled students to view this lesson.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Lesson
+                            </button>
+                            <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-resize textarea
+document.getElementById('content').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+});
+</script>
+{% endblock %}

@@ -22,7 +22,7 @@
     <div class="col-md-3">
         <div class="card stats-card">
             <div class="card-body">
-                <div class="stats-number">{{ courses|sum(attribute='enrollment_count') }}</div>
+                <div class="stats-number">{{ total_students }}</div>
                 <div class="stats-label">Total Students</div>
             </div>
         </div>
@@ -38,7 +38,7 @@
     <div class="col-md-3">
         <div class="card stats-card">
             <div class="card-body">
-                <div class="stats-number">{{ courses|sum(attribute='lessons')|sum(attribute='id')|length if courses else 0 }}</div>
+                <div class="stats-number">{{ total_lessons }}</div>
                 <div class="stats-label">Total Lessons</div>
             </div>
         </div>

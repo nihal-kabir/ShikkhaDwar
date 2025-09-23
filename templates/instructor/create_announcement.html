@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Create Announcement - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-bullhorn"></i> Create Announcement</h2>
+                <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Course
+                </a>
+            </div>
+
+            <!-- Course Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-book"></i> {{ course.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ course.description }}</p>
+                    <span class="badge badge-info">
+                        <i class="fas fa-users"></i> 
+                        {{ course.enrollments|length if course.enrollments else 0 }} enrolled students
+                    </span>
+                </div>
+            </div>
+
+            <!-- Create Announcement Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i> Announcement Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="title">Announcement Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="Enter announcement title">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="content">Announcement Content *</label>
+                                    <textarea class="form-control" id="content" name="content" rows="8" required 
+                                              placeholder="Enter your announcement message..."></textarea>
+                                    <small class="form-text text-muted">You can use HTML tags for formatting.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="announcement_type">Announcement Type</label>
+                                    <select class="form-control" id="announcement_type" name="announcement_type">
+                                        <option value="general">General</option>
+                                        <option value="important">Important</option>
+                                        <option value="urgent">Urgent</option>
+                                        <option value="assignment">Assignment</option>
+                                        <option value="exam">Exam</option>
+                                        <option value="schedule">Schedule Change</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="priority">Priority Level</label>
+                                    <select class="form-control" id="priority" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="expires_at">Expiration Date (Optional)</label>
+                                    <input type="datetime-local" class="form-control" id="expires_at" name="expires_at">
+                                    <small class="form-text text-muted">When this announcement should no longer be displayed.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="send_email" name="send_email" checked>
+                                    <label class="form-check-label" for="send_email">
+                                        Send Email Notification
+                                    </label>
+                                    <small class="form-text text-muted">Email all enrolled students about this announcement.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="pin_announcement" name="pin_announcement">
+                                    <label class="form-check-label" for="pin_announcement">
+                                        Pin Announcement
+                                    </label>
+                                    <small class="form-text text-muted">Keep this announcement at the top of the list.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="is_published" name="is_published" checked>
+                                    <label class="form-check-label" for="is_published">
+                                        Publish Immediately
+                                    </label>
+                                    <small class="form-text text-muted">Make this announcement visible to students.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h6><i class="fas fa-eye"></i> Preview</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="announcementPreview" class="border rounded p-3 bg-light">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0" id="previewTitle">Announcement Title</h6>
+                                        <span class="badge badge-secondary" id="previewType">general</span>
+                                    </div>
+                                    <div class="text-muted small mb-2">
+                                        <i class="fas fa-user"></i> {{ session.get('username', 'Instructor') }} • 
+                                        <i class="fas fa-clock"></i> <span id="previewDate">{{ moment().format('MMMM Do, YYYY') }}</span>
+                                    </div>
+                                    <div id="previewContent" class="text-muted">
+                                        Enter your announcement content to see a preview...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-bullhorn"></i> Create Announcement
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ml-2" onclick="previewAnnouncement()">
+                                <i class="fas fa-eye"></i> Update Preview
+                            </button>
+                            <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-resize textarea
+document.getElementById('content').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+});
+
+// Real-time preview updates
+document.getElementById('title').addEventListener('input', updatePreview);
+document.getElementById('content').addEventListener('input', updatePreview);
+document.getElementById('announcement_type').addEventListener('change', updatePreview);
+
+function updatePreview() {
+    const title = document.getElementById('title').value || 'Announcement Title';
+    const content = document.getElementById('content').value || 'Enter your announcement content to see a preview...';
+    const type = document.getElementById('announcement_type').value;
+    
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewContent').innerHTML = content;
+    document.getElementById('previewType').textContent = type;
+    
+    // Update badge color based on type
+    const badge = document.getElementById('previewType');
+    badge.className = 'badge ';
+    switch(type) {
+        case 'important':
+            badge.className += 'badge-warning';
+            break;
+        case 'urgent':
+            badge.className += 'badge-danger';
+            break;
+        case 'assignment':
+            badge.className += 'badge-info';
+            break;
+        case 'exam':
+            badge.className += 'badge-primary';
+            break;
+        case 'schedule':
+            badge.className += 'badge-success';
+            break;
+        default:
+            badge.className += 'badge-secondary';
+    }
+}
+
+function previewAnnouncement() {
+    updatePreview();
+    document.getElementById('announcementPreview').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Set current date/time for preview
+document.getElementById('previewDate').textContent = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+
+// Initialize preview
+updatePreview();
+</script>
+{% endblock %}

@@ -38,11 +38,15 @@ def dashboard():
     user = User.query.get(session['user_id'])
     courses = Course.query.filter_by(instructor_id=session['user_id']).all()
     
-    # Get enrollment statistics
+    # Get enrollment statistics and calculate totals
+    total_lessons = 0
+    total_students = 0
     for course in courses:
         course.enrollment_count = Enrollment.query.filter_by(course_id=course.id).count()
+        total_lessons += len(course.lessons)
+        total_students += course.enrollment_count
     
-    return render_template('instructor/dashboard.html', user=user, courses=courses)
+    return render_template('instructor/dashboard.html', user=user, courses=courses, total_lessons=total_lessons, total_students=total_students)
 
 @instructor_bp.route('/instructor/course/create', methods=['GET', 'POST'])
 @instructor_required
@@ -124,10 +128,15 @@ def create_quiz(course_id):
         quiz = Quiz(
             title=request.form['title'],
             description=request.form['description'],
+            instructions=request.form.get('instructions', ''),
             course_id=course_id,
             quiz_type=request.form.get('quiz_type', 'lesson_quiz'),
             time_limit=int(request.form.get('time_limit', 60)),
-            max_attempts=int(request.form.get('max_attempts', 3))
+            max_attempts=int(request.form.get('max_attempts', 3)),
+            passing_score=int(request.form.get('passing_score', 70)),
+            randomize_questions='randomize_questions' in request.form,
+            show_correct_answers='show_correct_answers' in request.form,
+            is_published='is_published' in request.form
         )
         
         db.session.add(quiz)
@@ -167,6 +176,8 @@ def create_question(quiz_id):
         next_order = (last_question.order_num + 1) if last_question else 1
         
         options = None
+        correct_answer = None
+        
         if request.form['question_type'] == 'mcq':
             options = {
                 'A': request.form['option_a'],
@@ -175,13 +186,21 @@ def create_question(quiz_id):
                 'D': request.form['option_d']
             }
             options = json.dumps(options)
+            correct_answer = request.form['correct_answer']
+        elif request.form['question_type'] == 'true_false':
+            correct_answer = request.form['true_false_answer']
+        elif request.form['question_type'] == 'short_answer':
+            correct_answer = request.form['short_answer_text']
+        else:
+            # For essay types
+            correct_answer = request.form.get('correct_answer', '')
         
         question = Question(
             quiz_id=quiz_id,
             question_text=request.form['question_text'],
             question_type=request.form['question_type'],
             options=options,
-            correct_answer=request.form['correct_answer'],
+            correct_answer=correct_answer,
             points=int(request.form.get('points', 1)),
             order_num=next_order
         )
@@ -238,3 +257,28 @@ def course_analytics(course_id):
     
     return render_template('instructor/analytics.html', course=course, total_enrollments=total_enrollments, 
                          completed_enrollments=completed_enrollments, quiz_attempts=quiz_attempts)
+
+@instructor_bp.route('/instructor/quiz/<int:quiz_id>/update', methods=['POST'])
+@instructor_required
+def update_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    course = Course.query.get_or_404(quiz.course_id)
+    
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+    
+    try:
+        # Update quiz settings from form
+        quiz.randomize_questions = 'randomize_questions' in request.form
+        quiz.show_correct_answers = 'show_correct_answers' in request.form
+        quiz.is_published = 'is_published' in request.form
+        
+        db.session.commit()
+        flash('Quiz settings updated successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating quiz settings. Please try again.', 'error')
+    
+    return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))

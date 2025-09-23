@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Create Quiz - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> Create New Quiz</h2>
+                <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Course
+                </a>
+            </div>
+
+            <!-- Course Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-book"></i> {{ course.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ course.description }}</p>
+                </div>
+            </div>
+
+            <!-- Create Quiz Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-question-circle"></i> Quiz Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="title">Quiz Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="Enter quiz title">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="description">Quiz Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="4" 
+                                              placeholder="Describe what this quiz covers..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="instructions">Instructions for Students</label>
+                                    <textarea class="form-control" id="instructions" name="instructions" rows="3" 
+                                              placeholder="Enter instructions for taking this quiz..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="time_limit">Time Limit (minutes)</label>
+                                    <input type="number" class="form-control" id="time_limit" name="time_limit" 
+                                           min="1" value="30" required>
+                                    <small class="form-text text-muted">How long students have to complete the quiz.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="passing_score">Passing Score (%)</label>
+                                    <input type="number" class="form-control" id="passing_score" name="passing_score" 
+                                           min="0" max="100" value="70" required>
+                                    <small class="form-text text-muted">Minimum score required to pass.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="max_attempts">Maximum Attempts</label>
+                                    <input type="number" class="form-control" id="max_attempts" name="max_attempts" 
+                                           min="1" value="3" required>
+                                    <small class="form-text text-muted">How many times students can retake the quiz.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="randomize_questions" name="randomize_questions">
+                                    <label class="form-check-label" for="randomize_questions">
+                                        Randomize Questions
+                                    </label>
+                                    <small class="form-text text-muted">Show questions in random order.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="show_correct_answers" name="show_correct_answers" checked>
+                                    <label class="form-check-label" for="show_correct_answers">
+                                        Show Correct Answers
+                                    </label>
+                                    <small class="form-text text-muted">Display correct answers after submission.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="is_published" name="is_published">
+                                    <label class="form-check-label" for="is_published">
+                                        Publish Quiz
+                                    </label>
+                                    <small class="form-text text-muted">Make quiz available to students.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> After creating the quiz, you'll be able to add questions to it.
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Quiz
+                            </button>
+                            <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
