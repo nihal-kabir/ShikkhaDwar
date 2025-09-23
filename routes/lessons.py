@@ -35,17 +35,29 @@ def view_lesson(lesson_id):
 @lessons_bp.route('/lesson/<int:lesson_id>/complete', methods=['POST'])
 @login_required
 def complete_lesson(lesson_id):
-    progress = Progress.query.filter_by(user_id=session['user_id'], lesson_id=lesson_id).first()
-    if not progress:
-        progress = Progress(user_id=session['user_id'], lesson_id=lesson_id)
-        db.session.add(progress)
-    
-    progress.completed = True
-    progress.completion_date = db.func.now()
-    db.session.commit()
-    
-    flash('Lesson marked as completed!', 'success')
-    return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
+    try:
+        progress = Progress.query.filter_by(user_id=session['user_id'], lesson_id=lesson_id).first()
+        if not progress:
+            progress = Progress(user_id=session['user_id'], lesson_id=lesson_id)
+            db.session.add(progress)
+        
+        progress.completed = True
+        progress.completion_date = db.func.now()
+        db.session.commit()
+        
+        # Check if request is AJAX (JSON)
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return {'success': True, 'message': 'Lesson marked as completed!'}
+        else:
+            flash('Lesson marked as completed!', 'success')
+            return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
+    except Exception as e:
+        db.session.rollback()
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return {'success': False, 'message': 'Error marking lesson as complete'}, 500
+        else:
+            flash('Error marking lesson as complete', 'error')
+            return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
 
 @lessons_bp.route('/download/<int:resource_id>')
 @login_required

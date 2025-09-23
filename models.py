@@ -16,7 +16,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.Enum('student', 'instructor', 'admin'), nullable=False, default='student')
+    role = db.Column(db.Enum('student', 'instructor', 'admin', name='user_role'), nullable=False, default='student')
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -93,11 +93,16 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
+    instructions = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey(TABLE_COURSES), nullable=False)
     lesson_id = db.Column(db.Integer, db.ForeignKey(TABLE_LESSONS), nullable=True)  # For embedded quizzes
-    quiz_type = db.Column(db.Enum('lesson_quiz', 'assignment', 'exam'), default='lesson_quiz')
+    quiz_type = db.Column(db.Enum('lesson_quiz', 'assignment', 'exam', name='quiz_type'), default='lesson_quiz')
     time_limit = db.Column(db.Integer)  # in minutes
     max_attempts = db.Column(db.Integer, default=3)
+    passing_score = db.Column(db.Integer, default=70)  # percentage
+    randomize_questions = db.Column(db.Boolean, default=False)
+    show_correct_answers = db.Column(db.Boolean, default=True)
+    is_published = db.Column(db.Boolean, default=False)
     due_date = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
@@ -111,7 +116,7 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey(TABLE_QUIZZES), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.Enum('mcq', 'true_false', 'short_answer', 'essay'), nullable=False)
+    question_type = db.Column(db.Enum('mcq', 'true_false', 'short_answer', 'essay', name='question_type'), nullable=False)
     options = db.Column(db.Text)  # JSON string for MCQ options
     correct_answer = db.Column(db.Text)
     points = db.Column(db.Integer, default=1)

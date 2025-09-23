@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Create Question - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> Create Question</h2>
+                <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Quiz
+                </a>
+            </div>
+
+            <!-- Quiz Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ quiz.description or 'No description provided.' }}</p>
+                </div>
+            </div>
+
+            <!-- Create Question Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i> Question Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="questionForm">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="question_text">Question Text *</label>
+                                    <textarea class="form-control" id="question_text" name="question_text" rows="4" required 
+                                              placeholder="Enter your question here..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="question_type">Question Type *</label>
+                                    <select class="form-control" id="question_type" name="question_type" required onchange="updateQuestionType()">
+                                        <option value="">Select question type...</option>
+                                        <option value="mcq">Multiple Choice</option>
+                                        <option value="true_false">True/False</option>
+                                        <option value="short_answer">Short Answer</option>
+                                        <option value="essay">Essay</option>
+                                    </select>
+                                </div>
+
+                                <!-- Multiple Choice Options -->
+                                <div id="multipleChoiceOptions" style="display: none;">
+                                    <label>Answer Options</label>
+                                    <div id="optionsContainer">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_answer" value="A">
+                                                    </div>
+                                                </div>
+                                                <input type="text" class="form-control" name="option_a" placeholder="Option A" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_answer" value="B">
+                                                    </div>
+                                                </div>
+                                                <input type="text" class="form-control" name="option_b" placeholder="Option B" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_answer" value="C">
+                                                    </div>
+                                                </div>
+                                                <input type="text" class="form-control" name="option_c" placeholder="Option C" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_answer" value="D">
+                                                    </div>
+                                                </div>
+                                                <input type="text" class="form-control" name="option_d" placeholder="Option D" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">Select the radio button next to the correct answer.</small>
+                                </div>
+
+                                <!-- True/False Options -->
+                                <div id="trueFalseOptions" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Correct Answer</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="true_false_answer" value="true" id="answerTrue">
+                                            <label class="form-check-label" for="answerTrue">True</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="true_false_answer" value="false" id="answerFalse">
+                                            <label class="form-check-label" for="answerFalse">False</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Short Answer -->
+                                <div id="shortAnswerOptions" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="short_answer_text">Correct Answer *</label>
+                                        <input type="text" class="form-control" id="short_answer_text" name="short_answer_text" 
+                                               placeholder="Enter the correct answer">
+                                        <small class="form-text text-muted">Case-insensitive matching will be used.</small>
+                                    </div>
+                                </div>
+
+                                <!-- Essay Options -->
+                                <div id="essayOptions" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Essay questions require manual grading by the instructor.
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="grading_rubric">Grading Rubric (Optional)</label>
+                                        <textarea class="form-control" id="grading_rubric" name="grading_rubric" rows="3" 
+                                                  placeholder="Provide guidelines for grading this essay question..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="explanation">Explanation (Optional)</label>
+                                    <textarea class="form-control" id="explanation" name="explanation" rows="3" 
+                                              placeholder="Provide an explanation for the correct answer..."></textarea>
+                                    <small class="form-text text-muted">This will be shown to students after they submit their answer.</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="points">Points</label>
+                                    <input type="number" class="form-control" id="points" name="points" 
+                                           min="1" value="1" required>
+                                    <small class="form-text text-muted">Points awarded for correct answer.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="difficulty">Difficulty Level</label>
+                                    <select class="form-control" id="difficulty" name="difficulty">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="tags">Tags (Optional)</label>
+                                    <input type="text" class="form-control" id="tags" name="tags" 
+                                           placeholder="topic1, topic2, topic3">
+                                    <small class="form-text text-muted">Comma-separated tags for organization.</small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="randomize_options" name="randomize_options">
+                                    <label class="form-check-label" for="randomize_options">
+                                        Randomize Options
+                                    </label>
+                                    <small class="form-text text-muted">Shuffle answer options for multiple choice questions.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Question
+                            </button>
+                            <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateQuestionType() {
+    const questionType = document.getElementById('question_type').value;
+    
+    // Hide all option containers
+    document.getElementById('multipleChoiceOptions').style.display = 'none';
+    document.getElementById('trueFalseOptions').style.display = 'none';
+    document.getElementById('shortAnswerOptions').style.display = 'none';
+    document.getElementById('essayOptions').style.display = 'none';
+    
+    // Show relevant container
+    switch(questionType) {
+        case 'mcq':
+            document.getElementById('multipleChoiceOptions').style.display = 'block';
+            break;
+        case 'true_false':
+            document.getElementById('trueFalseOptions').style.display = 'block';
+            break;
+        case 'short_answer':
+            document.getElementById('shortAnswerOptions').style.display = 'block';
+            break;
+        case 'essay':
+            document.getElementById('essayOptions').style.display = 'block';
+            break;
+    }
+}
+
+// Removed dynamic option functions since we're using fixed A, B, C, D options
+
+// Form validation
+document.getElementById('questionForm').addEventListener('submit', function(e) {
+    const questionType = document.getElementById('question_type').value;
+    
+    if (questionType === 'mcq') {
+        const correctAnswer = document.querySelector('input[name="correct_answer"]:checked');
+        if (!correctAnswer) {
+            e.preventDefault();
+            alert('Please select the correct answer option.');
+            return;
+        }
+        
+        const options = ['option_a', 'option_b', 'option_c', 'option_d'];
+        for (let optionName of options) {
+            const option = document.querySelector(`input[name="${optionName}"]`);
+            if (!option.value.trim()) {
+                e.preventDefault();
+                alert('Please fill in all answer options.');
+                return;
+            }
+        }
+    } else if (questionType === 'true_false') {
+        const answer = document.querySelector('input[name="true_false_answer"]:checked');
+        if (!answer) {
+            e.preventDefault();
+            alert('Please select the correct answer (True or False).');
+            return;
+        }
+    } else if (questionType === 'short_answer') {
+        const answer = document.getElementById('short_answer_text').value;
+        if (!answer.trim()) {
+            e.preventDefault();
+            alert('Please provide the correct answer.');
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}

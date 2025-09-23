@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
-from models import Course, User, Enrollment, db
+from models import Course, User, Enrollment, Progress, db
 from functools import wraps
 
 courses_bp = Blueprint('courses', __name__)
@@ -20,7 +20,7 @@ def course_catalog():
     query = Course.query.filter_by(is_published=True)
     
     if search:
-        query = query.filter(Course.title.contains(search) | Course.description.contains(search))
+        query = query.filter(Course.title.ilike(f'%{search}%') | Course.description.ilike(f'%{search}%'))
     
     if category:
         query = query.filter_by(category=category)
@@ -35,12 +35,19 @@ def course_catalog():
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
     is_enrolled = False
+    progress_data = {}
     
     if 'user_id' in session:
         enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first()
         is_enrolled = enrollment is not None
+        
+        # Get progress for each lesson if enrolled
+        if is_enrolled:
+            for lesson in course.lessons:
+                progress = Progress.query.filter_by(user_id=session['user_id'], lesson_id=lesson.id).first()
+                progress_data[lesson.id] = progress
     
-    return render_template('courses/detail.html', course=course, is_enrolled=is_enrolled)
+    return render_template('courses/detail.html', course=course, is_enrolled=is_enrolled, progress_data=progress_data)
 
 @courses_bp.route('/enroll/<int:course_id>', methods=['POST'])
 @login_required
