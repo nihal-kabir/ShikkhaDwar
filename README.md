@@ -1,357 +1,239 @@
 # ShikkhaDwar - Learning Management System
 
-A comprehensive Learning Management System built with Flask, featuring secure authentication, course management, content delivery, assessments, and progress tracking.
+A comprehensive Learning Management System built with Flask that provides a complete platform for online education, course management, content delivery, and progress tracking.
 
-## 🛡️ Security Improvements
+**Live Demo**: https://shikkhadwar.onrender.com/
 
-The codebase has been enhanced with important security and code quality improvements:
+## Features
 
-### 1. **Environment-based Configuration**
-- Removed hardcoded secrets from source code
-- Added secure configuration management with `config.py`
-- Uses environment variables for sensitive data
-- Provides `.env.example` template for local development
+### Core Functionality
+- **User Management**: Role-based authentication system with students, instructors, and administrators
+- **Course Management**: Complete course creation, editing, and publishing workflow
+- **Content Delivery**: Video lessons with YouTube integration and downloadable resources
+- **Assessment System**: Multiple quiz types (MCQ, True/False, Short Answer, Essay) with automated grading
+- **Progress Tracking**: Comprehensive student progress monitoring and completion certificates
+- **Communication**: Announcement system for instructor-student communication
 
-### 2. **Database Security**
-- Eliminated hardcoded database passwords
-- Secure connection string management
-- Environment-based database configuration
+### User Roles
 
-### 3. **Code Quality Enhancements**
-- **Constants Management**: Centralized all string literals in `constants.py`
-- **Timezone-aware Datetime**: Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)`
-- **Removed Code Duplication**: Eliminated duplicate strings for better maintainability
-- **Clean Imports**: Organized imports and removed unused variables
+**Students**
+- Browse and enroll in published courses
+- Access video lessons and course materials
+- Take quizzes and view results
+- Track learning progress
+- Generate completion certificates
 
-### 4. **Configuration Files**
-- **`config.py`**: Manages different environments (development, production, testing)
-- **`constants.py`**: Central location for all application constants
-- **`.env.example`**: Template for environment variables
+**Instructors**
+- Create and manage courses
+- Upload content and resources
+- Create assessments with various question types
+- Grade student submissions
+- View course analytics and student progress
+- Manage announcements
 
-## 🚀 Quick Start
+**Administrators**
+- Full system access and user management
+- System-wide analytics and reporting
 
-### 1. Environment Setup
+## Technology Stack
+
+- **Backend**: Flask (Python web framework)
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Frontend**: HTML5, CSS3, Bootstrap, JavaScript
+- **Template Engine**: Jinja2
+- **Authentication**: Flask sessions with Werkzeug password hashing
+- **Deployment**: Gunicorn WSGI server
+
+## Installation
+
+### Prerequisites
+- Python 3.8 or higher
+- PostgreSQL database
+- Git
+
+### Setup Instructions
+
+1. **Clone the repository**
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your actual values
-# CRITICAL: Update these before deployment
-SECRET_KEY=your-super-secret-key-here
-DB_PASSWORD=your_database_password_here
+git clone https://github.com/nihal-kabir/ShikkhaDwar.git
+cd ShikkhaDwar
 ```
 
-### 2. Install Dependencies
+2. **Create virtual environment**
+```bash
+python -m venv venv
+source venv/Scripts/activate  # Windows
+source venv/bin/activate      # Unix/Linux/Mac
+```
+
+3. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Database Setup
+4. **Environment configuration**
 ```bash
-# Initialize database with sample data
+# Copy environment template
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+5. **Database setup**
+```bash
 python init_db.py
 ```
 
-### 4. Run Application
+6. **Run the application**
 ```bash
 python app.py
 ```
 
-## 🔐 Security Configuration
+The application will be available at `http://localhost:5000`
 
-### Environment Variables (`.env`)
-```env
-# Flask Configuration
-SECRET_KEY=your-super-secret-key-here-change-this-in-production
-FLASK_ENV=development
-
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_database_password_here
-DB_NAME=lms_db
-```
-
-### Production Deployment
-For production deployment:
-1. Set `FLASK_ENV=production`
-2. Use a strong, unique `SECRET_KEY`
-3. Secure your database credentials
-4. Never commit `.env` to version control
-
-## 🔑 Default Login Credentials
-
-**Development Environment Only:**
-- **Admin**: `admin` / `SecureAdmin2024!`
-- **Instructor**: `prof_smith` / `SecureInstructor2024!`
-- **Student**: `student1` / `SecureStudent2024!`
-
-⚠️ **Important**: Change these credentials before deployment to production!
-
-## University Learning Management System (LMS)
-
-A comprehensive Learning Management System built with Flask, MySQL, and modern web technologies.
-
-## Features
-
-### ✅ All 20 Required Features Implemented
-
-**R1 — Course Catalog:**
-- ✅ Course listing with search functionality
-- ✅ Category-based filtering
-- ✅ Course landing pages with detailed information
-- ✅ Enrollment system
-
-**R2 — Content Delivery:**
-- ✅ Upload and display video lessons (YouTube integration)
-- ✅ Text-based lesson content with rich formatting
-- ✅ Lesson progress tracking
-- ✅ Embedded quizzes within lessons
-- ✅ Downloadable course resources
-
-**R3 — Assessments & Grading:**
-- ✅ Create quizzes with multiple question types (MCQ, True/False, Short Answer, Essay)
-- ✅ Automatic grading for MCQ and True/False questions
-- ✅ Manual grading interface for instructors
-- ✅ Comprehensive gradebook view
-- ✅ Grade statistics and analytics
-
-**R4 — Student Progress:**
-- ✅ Personal progress dashboard
-- ✅ Course completion tracking
-- ✅ Certificate generation upon completion
-- ✅ Week-by-week timeline view
-- ✅ Notification system for deadlines
-
-**R5 — Instructor Tools:**
-- ✅ Course analytics and engagement metrics
-- ✅ Student communication via announcements
-- ✅ Enrollment management
-- ✅ Course creation and management tools
-- ✅ Content upload and organization
-
-## Technology Stack
-
-- **Backend:** Flask (Python)
-- **Database:** MySQL with SQLAlchemy ORM
-- **Frontend:** HTML5, CSS3, Bootstrap 5, JavaScript
-- **Template Engine:** Jinja2
-- **Authentication:** Flask sessions with password hashing
-
-## Installation & Setup
-
-### Prerequisites
-- Python 3.8 or higher
-- MySQL Server
-- Git (optional)
-
-### Quick Start
-
-1. **Clone or download the project**
-   ```bash
-   git clone <repository-url>
-   cd project-2
-   ```
-
-2. **Run the setup script**
-
-   **For Windows:**
-   ```bash
-   run.bat
-   ```
-   
-   **For Unix/Linux/Mac:**
-   ```bash
-   chmod +x run.sh
-   ./run.sh
-   ```
-
-3. **Access the application**
-   - Open your browser and go to: http://localhost:5000
-
-### Manual Setup (Alternative)
-
-1. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/Scripts/activate  # Windows
-   source venv/bin/activate      # Unix/Linux/Mac
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure MySQL**
-   - Ensure MySQL is running
-   - Update credentials in `app.py` if needed:
-     ```python
-     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:_03nihal.k@localhost/lms_db'
-     ```
-
-4. **Initialize database**
-   ```bash
-   python init_db.py
-   ```
-
-5. **Run the application**
-   ```bash
-   python app.py
-   ```
-
-## Default Login Credentials
-
-**Instructor Account:**
-- Username: `prof_smith`
-- Password: `password123`
-
-**Student Account:**
-- Username: `student1`
-- Password: `password123`
-
-**Admin Account:**
-- Username: `admin`
-- Password: `admin123`
+### Quick Start (Automated)
+**Windows**: Run `run.bat`
+**Unix/Linux/Mac**: Run `./run.sh`
 
 ## Project Structure
 
 ```
-project-2/
-├── app.py                 # Main Flask application
-├── models.py              # Database models
-├── init_db.py            # Database initialization
-├── requirements.txt       # Python dependencies
-├── run.bat / run.sh      # Setup scripts
-├── routes/               # Route blueprints
-│   ├── auth.py          # Authentication routes
-│   ├── courses.py       # Course management
-│   ├── lessons.py       # Lesson viewing
-│   ├── assessments.py   # Quiz and grading
-│   ├── student.py       # Student features
-│   └── instructor.py    # Instructor tools
-├── templates/            # HTML templates
-│   ├── base.html        # Base template
-│   ├── index.html       # Homepage
-│   ├── auth/            # Authentication pages
-│   ├── courses/         # Course pages
-│   ├── lessons/         # Lesson pages
-│   ├── assessments/     # Quiz pages
-│   ├── student/         # Student dashboard
-│   └── instructor/      # Instructor dashboard
-├── static/              # Static files
-│   ├── css/
-│   │   └── style.css    # Custom CSS
-│   └── js/
-│       └── main.js      # Custom JavaScript
-└── uploads/             # File uploads (created automatically)
+ShikkhaDwar/
+├── app.py                    # Main Flask application
+├── config.py                 # Configuration settings
+├── models.py                 # Database models
+├── constants.py              # Application constants
+├── init_db.py               # Database initialization
+├── migrate_quiz_fields.py   # Database migration script
+├── requirements.txt         # Python dependencies
+├── Procfile                 # Deployment configuration
+├── routes/                  # Route blueprints
+│   ├── auth.py             # Authentication routes
+│   ├── courses.py          # Course management
+│   ├── lessons.py          # Lesson content delivery
+│   ├── assessments.py      # Quiz and assessment handling
+│   ├── student.py          # Student dashboard and features
+│   └── instructor.py       # Instructor tools and analytics
+├── templates/              # HTML templates
+│   ├── base.html          # Base template
+│   ├── index.html         # Landing page
+│   ├── auth/              # Authentication pages
+│   ├── courses/           # Course-related pages
+│   ├── lessons/           # Lesson viewing pages
+│   ├── assessments/       # Quiz and grading pages
+│   ├── student/           # Student dashboard
+│   └── instructor/        # Instructor dashboard
+├── static/                # Static assets
+│   ├── css/              # Stylesheets
+│   └── js/               # JavaScript files
+└── uploads/              # User uploaded files (auto-created)
 ```
-
-## Key Features Detailed
-
-### For Students:
-- Browse and search course catalog
-- Enroll in courses
-- Watch video lessons and read content
-- Download course resources
-- Take quizzes and assignments
-- Track progress and completion
-- Generate completion certificates
-- View grades and feedback
-
-### For Instructors:
-- Create and manage courses
-- Upload video content and materials
-- Create quizzes with various question types
-- Grade student submissions
-- View course analytics
-- Manage student enrollments
-- Send announcements to students
-- Track student progress
-
-### For Administrators:
-- Manage all users and courses
-- System-wide analytics
-- User role management
 
 ## Database Schema
 
-The system includes the following main entities:
-- **Users** (students, instructors, admins)
-- **Courses** with lessons and quizzes
-- **Enrollments** tracking student course participation
-- **Progress** tracking lesson completion
-- **Quizzes** with questions and attempts
-- **Grades** and feedback
-- **Announcements** for course communication
-- **Certificates** for course completion
+The system includes comprehensive data models:
+
+- **Users**: Students, instructors, and administrators with role-based permissions
+- **Courses**: Course information with instructor relationships and publishing status
+- **Lessons**: Individual lesson content with video integration and ordering
+- **Resources**: Downloadable course materials linked to lessons
+- **Enrollments**: Student course registration with progress tracking
+- **Quizzes**: Assessments with multiple question types and grading options
+- **Questions**: Individual quiz questions with various formats
+- **QuizAttempts**: Student quiz submissions with scoring
+- **Progress**: Lesson completion tracking and time spent
+- **Grades**: Manual grading with instructor feedback
+- **Announcements**: Course communication system
+- **Certificates**: Automated certificate generation upon completion
+
+## Configuration
+
+The application supports multiple environments through configuration classes:
+
+- **Development**: Debug mode enabled, local database
+- **Production**: Optimized for deployment with security measures
+- **Testing**: In-memory database for automated testing
+
+Key configuration options:
+- Database connection settings
+- File upload limits and storage
+- Security keys and session management
+- Application-specific constants
 
 ## Security Features
 
-- Password hashing with Werkzeug
-- Session-based authentication
-- Role-based access control
-- SQL injection prevention with SQLAlchemy
-- File upload validation
-- CSRF protection ready (can be enhanced)
+- Password hashing using Werkzeug security utilities
+- Session-based authentication with secure cookie handling
+- Role-based access control for different user types
+- SQL injection prevention through SQLAlchemy ORM
+- File upload validation and secure filename handling
+- Environment-based configuration management
 
-## Responsive Design
+## API Endpoints
 
-The application features a fully responsive design that works on:
-- Desktop computers
-- Tablets
-- Mobile phones
+The application provides RESTful routes organized by functionality:
 
-## Browser Compatibility
+- **Authentication**: `/register`, `/login`, `/logout`
+- **Course Management**: `/courses`, `/courses/<id>`, `/enroll/<course_id>`
+- **Content Delivery**: `/lessons/<id>`, `/resources/<id>/download`
+- **Assessments**: `/quizzes/<id>`, `/submit-quiz`, `/quiz-results`
+- **Student Features**: `/student/dashboard`, `/student/progress`, `/certificates`
+- **Instructor Tools**: `/instructor/dashboard`, `/create-course`, `/manage-students`
+
+## Development
+
+### Running Tests
+```bash
+python -m pytest tests/
+```
+
+### Database Migrations
+```bash
+python migrate_quiz_fields.py
+```
+
+### Environment Variables
+Required environment variables (see `.env.example`):
+- `SECRET_KEY`: Flask session security key
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: Database connection
+- `FLASK_ENV`: Application environment (development/production/testing)
+
+## Deployment
+
+The application is configured for deployment on platforms like Render, Heroku, or similar PaaS providers:
+
+1. Set environment variables in your hosting platform
+2. Ensure PostgreSQL database is available
+3. The `Procfile` configures Gunicorn as the WSGI server
+4. Static files are served directly by Flask (suitable for small to medium applications)
+
+## Browser Support
 
 Tested and compatible with:
 - Chrome (recommended)
 - Firefox
 - Safari
-- Edge
+- Microsoft Edge
 
-## Troubleshooting
+## Contributing
 
-### Common Issues:
-
-1. **MySQL Connection Error**
-   - Ensure MySQL server is running
-   - Verify credentials in `app.py`
-   - Check if database `lms_db` exists
-
-2. **Module Import Errors**
-   - Ensure virtual environment is activated
-   - Run `pip install -r requirements.txt`
-
-3. **Port Already in Use**
-   - Change the port in `app.py`: `app.run(debug=True, port=5001)`
-
-4. **File Upload Issues**
-   - Check if `uploads/` directory exists and is writable
-   - Verify file size limits in `app.py`
-
-## Future Enhancements
-
-- Real-time chat/messaging
-- Advanced analytics dashboard
-- Mobile app development
-- Integration with external LTI tools
-- Advanced quiz question types
-- Plagiarism detection
-- Video conferencing integration
-- Bulk user import/export
-
-## Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review the error logs in the console
-3. Ensure all dependencies are properly installed
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## License
 
-This project is for educational purposes. Feel free to use and modify as needed.
+This project is developed for educational purposes. Feel free to use and modify as needed.
+
+## Support
+
+For technical issues:
+1. Check the application logs
+2. Verify database connectivity
+3. Ensure all environment variables are properly set
+4. Review the project documentation
 
 ---
 
-**University LMS** - A comprehensive solution for online education and course management.
+**ShikkhaDwar** - Empowering education through technology
