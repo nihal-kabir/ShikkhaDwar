@@ -1,20 +1,17 @@
 /* Custom CSS for University LMS */
 
 :root {
-    --primary-color: #6b7280;
-    --primary-light: #8b9475;
+    --primary-color: #8b9475;
+    --primary-light: #a8b58a;
     --primary-dark: #4a5d23;
-    --secondary-color: #a8b58a;
+    --secondary-color: #789461;
     --success-color: #7c8471;
     --danger-color: #a67c52;
     --warning-color: #b8a082;
-    --info-color: #789461;
+    --info-color: #6b7d4f;
     --light-color: #f5f6f2;
     --dark-color: #2d3e1a;
     --accent-color: #8fb069;
-    --gradient-primary: linear-gradient(135deg, #6b7280 0%, #4a5d23 100%);
-    --gradient-secondary: linear-gradient(135deg, #8b9475 0%, #789461 100%);
-    --gradient-accent: linear-gradient(135deg, #8fb069 0%, #a8b58a 100%);
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -26,7 +23,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, #f5f6f2 0%, #e8ede0 100%);
+    background: #f5f6f2;
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #2d3e1a;
@@ -34,7 +31,7 @@ body {
 
 /* Ensure text readability */
 .text-muted {
-    color: #6b7280 !important;
+    color: #789461 !important;
 }
 
 .text-dark {
@@ -79,30 +76,12 @@ p, span, div, li {
 
 /* Top Notification Bar */
 .top-bar {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
     font-size: 0.875rem;
     font-weight: 500;
     padding: 0.5rem 0;
     text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.top-bar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
 }
 
 /* Modern Navbar */
@@ -135,7 +114,7 @@ p, span, div, li {
 }
 
 .navbar-nav .nav-link:hover {
-    background: rgba(107, 114, 128, 0.1);
+    background: rgba(139, 148, 117, 0.1);
     color: var(--primary-color) !important;
     transform: translateY(-1px);
 }
@@ -159,7 +138,7 @@ p, span, div, li {
 .user-avatar {
     width: 32px;
     height: 32px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -190,7 +169,7 @@ p, span, div, li {
 }
 
 .hero-section {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
     padding: 5rem 0;
     text-align: center;
@@ -231,7 +210,7 @@ p, span, div, li {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     transform: scaleX(0);
     transition: var(--transition);
 }
@@ -280,7 +259,7 @@ p, span, div, li {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: transparent;
     transition: var(--transition);
 }
 
@@ -289,14 +268,14 @@ p, span, div, li {
 }
 
 .btn-primary {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
-    background: var(--gradient-primary);
+    background: var(--primary-color);
 }
 
 .btn-outline-primary {
@@ -341,7 +320,7 @@ p, span, div, li {
 
 .progress-bar {
     border-radius: 10px;
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
 }
 
 /* Modern progress element styling */
@@ -358,12 +337,12 @@ progress::-webkit-progress-bar {
 }
 
 progress::-webkit-progress-value {
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
     border-radius: 10px;
 }
 
 progress::-moz-progress-bar {
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
     border-radius: 10px;
 }
 
@@ -404,25 +383,25 @@ progress::-moz-progress-bar {
 }
 
 .alert-success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: var(--success-color);
     color: #065f46;
     border-left: 4px solid var(--success-color);
 }
 
 .alert-danger {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    background: var(--danger-color);
     color: #991b1b;
     border-left: 4px solid var(--danger-color);
 }
 
 .alert-warning {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    background: var(--warning-color);
     color: #92400e;
     border-left: 4px solid var(--warning-color);
 }
 
 .alert-info {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    background: var(--info-color);
     color: #1e40af;
     border-left: 4px solid var(--info-color);
 }
@@ -451,7 +430,7 @@ progress::-moz-progress-bar {
 
 /* Modern Footer */
 .modern-footer {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     position: relative;
     overflow: hidden;
     color: white;
@@ -620,7 +599,7 @@ progress::-moz-progress-bar {
 }
 
 .certificate {
-    background: linear-gradient(135deg, #fff, #f8f9fa);
+    background: #fff;
     border: 2px solid var(--primary-color);
     border-radius: 15px;
     padding: 3rem;
@@ -668,7 +647,7 @@ progress::-moz-progress-bar {
 
 /* Progress Page Styles */
 .progress-header {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+    background: rgba(139, 148, 117, 0.05);
     border-radius: var(--border-radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
@@ -677,7 +656,7 @@ progress::-moz-progress-bar {
 .progress-icon {
     width: 60px;
     height: 60px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -701,7 +680,7 @@ progress::-moz-progress-bar {
 }
 
 .modern-lessons-card .card-header {
-    background: var(--gradient-primary) !important;
+    background: var(--primary-color) !important;
     border: none;
     padding: 1.5rem;
 }
@@ -733,7 +712,7 @@ progress::-moz-progress-bar {
 .week-number {
     width: 40px;
     height: 40px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -809,7 +788,7 @@ progress::-moz-progress-bar {
 }
 
 .modern-badge.success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: var(--success-color);
     color: #065f46;
 }
 
@@ -827,7 +806,7 @@ progress::-moz-progress-bar {
 .empty-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    background: var(--light-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -901,7 +880,7 @@ progress::-moz-progress-bar {
 }
 
 .completion-celebration {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: var(--success-color);
     border-radius: var(--border-radius);
     padding: 2rem;
 }
@@ -948,7 +927,7 @@ progress::-moz-progress-bar {
 .activity-icon {
     width: 32px;
     height: 32px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1076,7 +1055,7 @@ progress::-moz-progress-bar {
 
 /* Additional Olive Theme Enhancements */
 .bg-olive {
-    background: var(--gradient-primary) !important;
+    background: var(--primary-color) !important;
     color: white !important;
 }
 
@@ -1090,7 +1069,7 @@ progress::-moz-progress-bar {
 
 /* Enhanced olive-themed buttons */
 .btn-olive {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border: none;
     color: white;
     font-weight: 600;
@@ -1098,7 +1077,7 @@ progress::-moz-progress-bar {
 }
 
 .btn-olive:hover {
-    background: var(--gradient-secondary);
+    background: var(--secondary-color);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
     color: white;
@@ -1112,7 +1091,7 @@ progress::-moz-progress-bar {
 
 /* Top bar with olive theme */
 .top-bar {
-    background: linear-gradient(90deg, var(--light-color) 0%, #e8ede0 100%);
+    background: var(--light-color);
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--primary-light);
 }

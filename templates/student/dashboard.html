@@ -313,6 +313,53 @@ function quickEnroll(courseId, buttonElement) {
     </div>
 </div>
 
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 text-olive"><i class="fas fa-chart-line"></i> Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h4 class="text-olive">{{ enrollments|length }}</h4>
+                        <small class="text-muted">Enrolled Courses</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-success">{{ enrollments|selectattr('certificate_issued')|list|length }}</h4>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-info">
+                            {% set avg = enrollments|map(attribute='progress_percentage')|sum / enrollments|length if enrollments else 0 %}
+                            {{ "%.0f"|format(avg) }}%
+                        </h4>
+                        <small class="text-muted">Avg Progress</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 text-olive"><i class="fas fa-tasks"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('student.view_grades') }}" class="btn btn-outline-olive">
+                        <i class="fas fa-chart-bar"></i> View Grades
+                    </a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-outline-olive">
+                        <i class="fas fa-plus"></i> Enroll in New Course
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Additional CSS -->
 <style>
 .hover-card {
@@ -356,7 +403,7 @@ function quickEnroll(courseId, buttonElement) {
 }
 
 .timeline-content h6 {
-    color: var(--primary-color);
+    color: var(--olive-dark);
 }
 
 .recommended-course:last-child {
@@ -365,71 +412,4 @@ function quickEnroll(courseId, buttonElement) {
     padding-bottom: 0 !important;
 }
 </style>
-{% endblock %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No courses enrolled yet</h5>
-                        <p class="text-muted">Browse our course catalog to get started!</p>
-                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Browse Courses
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6><i class="fas fa-chart-line"></i> Quick Stats</h6>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <h4 class="text-primary">{{ enrollments|length }}</h4>
-                        <small class="text-muted">Enrolled Courses</small>
-                    </div>
-                    <div class="col-4">
-                        <h4 class="text-success">{{ enrollments|selectattr('certificate_issued')|list|length }}</h4>
-                        <small class="text-muted">Completed</small>
-                    </div>
-                    <div class="col-4">
-                        <h4 class="text-info">
-                            {% set avg = enrollments|map(attribute='progress_percentage')|sum / enrollments|length if enrollments else 0 %}
-                            {{ "%.0f"|format(avg) }}%
-                        </h4>
-                        <small class="text-muted">Avg Progress</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6><i class="fas fa-tasks"></i> Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('student.view_grades') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-chart-bar"></i> View Grades
-                    </a>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-outline-success">
-                        <i class="fas fa-plus"></i> Enroll in New Course
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
