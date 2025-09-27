@@ -22,7 +22,8 @@ class Config:
     DB_NAME = os.environ.get('DB_NAME') or 'lms_db'
     
     SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        "postgresql://root:jw5RKhRtB3ZNxXbl2eRVpAiNpNOC7JOU@dpg-d3c15eumcj7s73d6fl4g-a.oregon-postgres.render.com/shikkhadwar"
+        # f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
 class DevelopmentConfig(Config):
