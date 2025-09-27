@@ -5,8 +5,7 @@ Run this script to create the database and sample data
 
 import os
 import sys
-import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+import pymysql
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app import app
@@ -19,52 +18,46 @@ from constants import (
 )
 import json
 
-def test_postgresql_connection():
-    """Test PostgreSQL connection and create database if needed"""
+def test_mysql_connection():
+    """Test MySQL connection and create database if needed"""
     try:
         # Use configuration from config.py instead of hardcoded values
         config = Config()
         
-        # First connect to postgres database to create our database
-        connection = psycopg2.connect(
+        # First connect to mysql without specifying database to create our database
+        connection = pymysql.connect(
             host=config.DB_HOST,
-            port=config.DB_PORT,
+            port=int(config.DB_PORT),
             user=config.DB_USER,
             password=config.DB_PASSWORD,
-            database='postgres'  # Connect to default postgres database
+            charset='utf8mb4'
         )
-        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = connection.cursor()
         
-        # Check if database exists
-        cursor.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{config.DB_NAME}'")
-        exists = cursor.fetchone()
+        # Check if database exists and create if it doesn't
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {config.DB_NAME}")
+        print(f"Database '{config.DB_NAME}' is ready!")
         
-        if not exists:
-            cursor.execute(f'CREATE DATABASE {config.DB_NAME}')
-            print(f"Database '{config.DB_NAME}' created successfully!")
-        else:
-            print(f"Database '{config.DB_NAME}' already exists.")
-            
         cursor.close()
         connection.close()
         
         # Test connection to our database
-        test_connection = psycopg2.connect(
+        test_connection = pymysql.connect(
             host=config.DB_HOST,
-            port=config.DB_PORT,
+            port=int(config.DB_PORT),
             user=config.DB_USER,
             password=config.DB_PASSWORD,
-            database=config.DB_NAME
+            database=config.DB_NAME,
+            charset='utf8mb4'
         )
         test_connection.close()
         
-        print("PostgreSQL connection successful!")
+        print("MySQL connection successful!")
         return True
     except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
-        print("Please ensure PostgreSQL is running and credentials are correct.")
-        print("Make sure you have created a PostgreSQL user and set the correct password.")
+        print(f"MySQL connection failed: {e}")
+        print("Please ensure MySQL is running and credentials are correct.")
+        print("Make sure you have created a MySQL user and set the correct password.")
         return False
 
 def create_sample_data():
@@ -383,8 +376,8 @@ while count < 5:
 
 def main():
     """Initialize the database"""
-    # Test PostgreSQL connection first
-    if not test_postgresql_connection():
+    # Test MySQL connection first
+    if not test_mysql_connection():
         return
         
     with app.app_context():

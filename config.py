@@ -16,13 +16,13 @@ class Config:
     
     # Database configuration
     DB_HOST = os.environ.get('DB_HOST') or 'localhost'
-    DB_PORT = os.environ.get('DB_PORT') or '5432'
-    DB_USER = os.environ.get('DB_USER') or 'postgres'
+    DB_PORT = os.environ.get('DB_PORT') or '3306'
+    DB_USER = os.environ.get('DB_USER') or 'root'
     DB_PASSWORD = os.environ.get('DB_PASSWORD') or 'your_password_here'
     DB_NAME = os.environ.get('DB_NAME') or 'lms_db'
     
     SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
 class DevelopmentConfig(Config):

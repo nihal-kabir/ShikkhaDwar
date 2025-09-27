@@ -1,20 +1,20 @@
 /* Custom CSS for University LMS */
 
 :root {
-    --primary-color: #4f46e5;
-    --primary-light: #6366f1;
-    --primary-dark: #3730a3;
-    --secondary-color: #64748b;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --info-color: #06b6d4;
-    --light-color: #f8fafc;
-    --dark-color: #000000;
-    --accent-color: #f97316;
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --primary-color: #6b7280;
+    --primary-light: #8b9475;
+    --primary-dark: #4a5d23;
+    --secondary-color: #a8b58a;
+    --success-color: #7c8471;
+    --danger-color: #a67c52;
+    --warning-color: #b8a082;
+    --info-color: #789461;
+    --light-color: #f5f6f2;
+    --dark-color: #2d3e1a;
+    --accent-color: #8fb069;
+    --gradient-primary: linear-gradient(135deg, #6b7280 0%, #4a5d23 100%);
+    --gradient-secondary: linear-gradient(135deg, #8b9475 0%, #789461 100%);
+    --gradient-accent: linear-gradient(135deg, #8fb069 0%, #a8b58a 100%);
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -26,19 +26,19 @@
 }
 
 body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: linear-gradient(135deg, #f5f6f2 0%, #e8ede0 100%);
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: #000000;
+    color: #2d3e1a;
 }
 
 /* Ensure text readability */
 .text-muted {
-    color: #333333 !important;
+    color: #6b7280 !important;
 }
 
 .text-dark {
-    color: #000000 !important;
+    color: #2d3e1a !important;
 }
 
 .text-primary {
@@ -135,7 +135,7 @@ p, span, div, li {
 }
 
 .navbar-nav .nav-link:hover {
-    background: rgba(79, 70, 229, 0.1);
+    background: rgba(107, 114, 128, 0.1);
     color: var(--primary-color) !important;
     transform: translateY(-1px);
 }
@@ -1072,4 +1072,47 @@ progress::-moz-progress-bar {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Additional Olive Theme Enhancements */
+.bg-olive {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+.text-olive {
+    color: var(--primary-color) !important;
+}
+
+.border-olive {
+    border-color: var(--primary-color) !important;
+}
+
+/* Enhanced olive-themed buttons */
+.btn-olive {
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-olive:hover {
+    background: var(--gradient-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: white;
+}
+
+/* Olive-themed badge */
+.badge-olive {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Top bar with olive theme */
+.top-bar {
+    background: linear-gradient(90deg, var(--light-color) 0%, #e8ede0 100%);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--primary-light);
 }
