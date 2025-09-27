@@ -4,8 +4,41 @@
 
 {% block scripts %}
 <script>
+function enrollInCourse(courseId, buttonElement) {
+    const originalContent = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enrolling...';
+    buttonElement.disabled = true;
+    
+    fetch('/course/' + courseId + '/enroll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            buttonElement.innerHTML = '<i class="fas fa-check"></i> Enrolled!';
+            buttonElement.classList.remove('btn-olive');
+            buttonElement.classList.add('btn-success');
+            showToast('Successfully enrolled in the course!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            buttonElement.innerHTML = originalContent;
+            buttonElement.disabled = false;
+            showToast(data.message || 'Failed to enroll', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        buttonElement.innerHTML = originalContent;
+        buttonElement.disabled = false;
+        showToast('Error enrolling in course', 'error');
+    });
+}
+
 function markComplete(lessonId, buttonElement) {
-    // Add loading state
     const originalContent = buttonElement.innerHTML;
     buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     buttonElement.disabled = true;
@@ -17,24 +50,16 @@ function markComplete(lessonId, buttonElement) {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show success message
             buttonElement.innerHTML = '<i class="fas fa-check"></i> Completed!';
             buttonElement.classList.remove('btn-success');
             buttonElement.classList.add('btn-outline-success');
             buttonElement.disabled = true;
-            
-            // Show toast notification
             showToast('Lesson marked as completed!', 'success');
+            updateProgressBar();
         } else {
-            // Reset button on failure
             buttonElement.innerHTML = originalContent;
             buttonElement.disabled = false;
             showToast(data.message || 'Failed to mark lesson as complete', 'error');
@@ -42,15 +67,27 @@ function markComplete(lessonId, buttonElement) {
     })
     .catch(error => {
         console.error('Error:', error);
-        // Reset button on error
         buttonElement.innerHTML = originalContent;
         buttonElement.disabled = false;
         showToast('Error marking lesson as complete', 'error');
     });
 }
 
+function updateProgressBar() {
+    const completedLessons = document.querySelectorAll('.lesson-completed').length;
+    const totalLessons = document.querySelectorAll('.lesson-item').length;
+    const progressPercentage = (completedLessons / totalLessons) * 100;
+    
+    const progressBar = document.getElementById('course-progress-bar');
+    const progressText = document.getElementById('course-progress-text');
+    
+    if (progressBar && progressText) {
+        progressBar.style.width = progressPercentage + '%';
+        progressText.textContent = `${completedLessons} of ${totalLessons} lessons completed`;
+    }
+}
+
 function showToast(message, type) {
-    // Remove any existing toasts
     const existingToasts = document.querySelectorAll('.custom-toast');
     existingToasts.forEach(toast => toast.remove());
     
@@ -70,134 +107,266 @@ function showToast(message, type) {
     `;
     
     document.body.appendChild(toast);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (toast.parentElement) {
-            toast.remove();
-        }
-    }, 5000);
+    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 5000);
 }
 </script>
 {% endblock %}
 
 {% block content %}
+<!-- Course Header -->
+<div class="bg-olive text-white rounded-4 p-4 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-2">
+                <a href="{{ url_for('courses.course_catalog') }}" class="text-white text-decoration-none me-3">
+                    <i class="fas fa-arrow-left"></i> Back to Catalog
+                </a>
+                <span class="badge bg-light text-dark">{{ course.category or 'General' }}</span>
+            </div>
+            <h1 class="fw-bold mb-3">{{ course.title }}</h1>
+            <div class="d-flex align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user me-2"></i>
+                    <span>{{ course.instructor.first_name }} {{ course.instructor.last_name }}</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-clock me-2"></i>
+                    <span>{{ course.duration_weeks }} weeks</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-play me-2"></i>
+                    <span>{{ course.lessons|length if course.lessons else 0 }} lessons</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center">
+            {% if not is_enrolled and 'user_id' in session %}
+                <button class="btn btn-light btn-lg fw-bold" onclick="enrollInCourse({{ course.id }}, this)">
+                    <i class="fas fa-plus me-2"></i>Enroll Now
+                </button>
+            {% elif is_enrolled %}
+                <div class="text-center">
+                    <i class="fas fa-check-circle fa-3x mb-2"></i>
+                    <div class="fw-bold">Enrolled</div>
+                    <small>Continue your learning journey</small>
+                </div>
+            {% elif 'user_id' not in session %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg fw-bold">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login to Enroll
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
+        <!-- Course Description -->
+        <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <h2>{{ course.title }}</h2>
-                <p class="text-muted mb-3">
-                    <i class="fas fa-user"></i> {{ course.instructor.first_name }} {{ course.instructor.last_name }} | 
-                    <i class="fas fa-tag"></i> {{ course.category or 'General' }} | 
-                    <i class="fas fa-clock"></i> {{ course.duration_weeks }} weeks
-                </p>
-                
-                <div class="mb-4">
-                    <h5>Course Description</h5>
-                    <p>{{ course.description }}</p>
+                <h5 class="card-title text-olive"><i class="fas fa-info-circle me-2"></i>Course Description</h5>
+                <p class="card-text">{{ course.description }}</p>
+            </div>
+        </div>
+
+        <!-- Course Progress (if enrolled) -->
+        {% if is_enrolled %}
+            {% set completed_count = progress_data.values() | selectattr('completed', 'equalto', true) | list | length %}
+            {% set total_count = course.lessons | length %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-olive"><i class="fas fa-chart-line me-2"></i>Your Progress</h5>
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div id="course-progress-bar" class="progress-bar bg-olive" role="progressbar" 
+                             style="width: {{ (completed_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+                    </div>
+                    <small id="course-progress-text" class="text-muted">
+                        {{ completed_count }} of {{ total_count }} lessons completed
+                    </small>
                 </div>
-                
-                <div class="mb-4">
-                    <h5>Course Lessons</h5>
-                    {% if course.lessons %}
-                        <div class="accordion" id="lessonsAccordion">
-                            {% for lesson in course.lessons %}
-                                <div class="accordion-item mb-2">
-                                    <h2 class="accordion-header" id="heading{{ lesson.id }}">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ lesson.id }}" aria-expanded="false" aria-controls="collapse{{ lesson.id }}">
-                                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
-                                                <div>
-                                                    <strong>Lesson {{ lesson.order_num }}: {{ lesson.title }}</strong>
+            </div>
+        {% endif %}
+
+        <!-- Course Lessons -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-olive text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Course Curriculum</h5>
+            </div>
+            <div class="card-body">
+                {% if course.lessons %}
+                    <div class="accordion" id="lessonsAccordion">
+                        {% for lesson in course.lessons %}
+                            <div class="lesson-item accordion-item mb-2 
+                                 {% if is_enrolled and progress_data.get(lesson.id) and progress_data[lesson.id].completed %}lesson-completed{% endif %}">
+                                <h2 class="accordion-header" id="heading{{ lesson.id }}">
+                                    <button class="accordion-button collapsed" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapse{{ lesson.id }}">
+                                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                            <div>
+                                                <div class="d-flex align-items-center">
                                                     {% if is_enrolled and progress_data.get(lesson.id) and progress_data[lesson.id].completed %}
-                                                        <span class="badge bg-success ms-2">
-                                                            <i class="fas fa-check"></i> Completed
-                                                        </span>
+                                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-play-circle text-olive me-2"></i>
                                                     {% endif %}
-                                                    <br>
-                                                    <small class="text-muted">Week {{ lesson.week_number }}</small>
+                                                    <strong>Lesson {{ lesson.order_num }}: {{ lesson.title }}</strong>
                                                 </div>
-                                                <div>
-                                                    {% if lesson.video_url %}
-                                                        <span class="badge bg-primary rounded-pill me-2">
-                                                            <i class="fas fa-video"></i> Video
-                                                        </span>
+                                                <small class="text-muted">Week {{ lesson.week_number }}</small>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                {% if lesson.video_url %}
+                                                    <span class="badge bg-primary"><i class="fas fa-video"></i> Video</span>
+                                                {% endif %}
+                                                <span class="badge bg-secondary"><i class="fas fa-book"></i> Content</span>
+                                                {% if is_enrolled and progress_data.get(lesson.id) and progress_data[lesson.id].completed %}
+                                                    <span class="badge bg-success"><i class="fas fa-check"></i> Done</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ lesson.id }}" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        {% if lesson.video_url %}
+                                            <div class="mb-4">
+                                                <h6><i class="fas fa-video text-primary"></i> Video Lesson</h6>
+                                                <div class="ratio ratio-16x9">
+                                                    {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
+                                                        {% if 'v=' in lesson.video_url %}
+                                                            {% set video_id = lesson.video_url.split('v=')[1].split('&')[0] %}
+                                                        {% elif 'youtu.be' in lesson.video_url %}
+                                                            {% set video_id = lesson.video_url.split('/')[-1].split('?')[0] %}
+                                                        {% else %}
+                                                            {% set video_id = lesson.video_url.split('/')[-1] %}
+                                                        {% endif %}
+                                                        <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
+                                                                title="{{ lesson.title }}" allowfullscreen frameborder="0">
+                                                        </iframe>
+                                                    {% else %}
+                                                        <video controls preload="metadata">
+                                                            <source src="{{ lesson.video_url }}" type="video/mp4">
+                                                            Your browser does not support the video tag.
+                                                        </video>
                                                     {% endif %}
-                                                    <span class="badge bg-secondary rounded-pill">
-                                                        <i class="fas fa-book"></i> Content
-                                                    </span>
                                                 </div>
                                             </div>
-                                        </button>
-                                    </h2>
-                                    <div id="collapse{{ lesson.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ lesson.id }}" data-bs-parent="#lessonsAccordion">
-                                        <div class="accordion-body">
-                                            {% if lesson.video_url %}
-                                                <div class="mb-4">
-                                                    <h6><i class="fas fa-video text-primary"></i> Lesson Video</h6>
-                                                    <div class="ratio ratio-16x9">
-                                                        {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
-                                                            {% if 'v=' in lesson.video_url %}
-                                                                {% set video_id = lesson.video_url.split('v=')[1].split('&')[0] %}
-                                                            {% elif 'youtu.be' in lesson.video_url %}
-                                                                {% set video_id = lesson.video_url.split('/')[-1].split('?')[0] %}
-                                                            {% else %}
-                                                                {% set video_id = lesson.video_url.split('/')[-1] %}
-                                                            {% endif %}
-                                                            <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
-                                                                    title="{{ lesson.title }}" 
-                                                                    allowfullscreen 
-                                                                    frameborder="0"
-                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                                                            </iframe>
-                                                        {% else %}
-                                                            <video controls preload="metadata">
-                                                                <source src="{{ lesson.video_url }}" type="video/mp4">
-                                                                <source src="{{ lesson.video_url }}" type="video/webm">
-                                                                <source src="{{ lesson.video_url }}" type="video/ogg">
-                                                                <p>Your browser does not support the video tag. 
-                                                                   <a href="{{ lesson.video_url }}" target="_blank">Download the video</a> instead.
-                                                                </p>
-                                                            </video>
-                                                        {% endif %}
-                                                    </div>
+                                        {% endif %}
+                                        
+                                        {% if lesson.content %}
+                                            <div class="mb-4">
+                                                <h6><i class="fas fa-book text-success"></i> Lesson Content</h6>
+                                                <div class="border rounded-3 p-3 bg-light">
+                                                    {{ lesson.content|safe }}
                                                 </div>
-                                            {% endif %}
-                                            
-                                            {% if lesson.content %}
-                                                <div class="lesson-content">
-                                                    <h6><i class="fas fa-book text-success"></i> Lesson Content</h6>
-                                                    <div class="border rounded p-3 bg-light">
-                                                        {{ lesson.content|safe }}
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                            
-                                            {% if is_enrolled %}
-                                                <div class="mt-3">
-                                                    <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-play"></i> 
-                                                        {% if progress_data.get(lesson.id) and progress_data[lesson.id].completed %}
-                                                            Resume Lesson
-                                                        {% else %}
-                                                            Start Lesson
-                                                        {% endif %}
-                                                    </a>
-                                                    {% set lesson_progress = progress_data.get(lesson.id) %}
-                                                    {% if lesson_progress and lesson_progress.completed %}
-                                                        <button class="btn btn-outline-success btn-sm ms-2" disabled>
-                                                            <i class="fas fa-check"></i> Completed!
-                                                        </button>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if is_enrolled %}
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" class="btn btn-olive">
+                                                    <i class="fas fa-play"></i> 
+                                                    {% if progress_data.get(lesson.id) and progress_data[lesson.id].completed %}
+                                                        Review Lesson
                                                     {% else %}
-                                                        <button class="btn btn-success btn-sm ms-2" onclick="markComplete({{ lesson.id }}, this)">
-                                                            <i class="fas fa-check"></i> Mark Complete
-                                                        </button>
+                                                        Start Lesson
                                                     {% endif %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
+                                                </a>
+                                                {% set lesson_progress = progress_data.get(lesson.id) %}
+                                                {% if lesson_progress and lesson_progress.completed %}
+                                                    <button class="btn btn-outline-success" disabled>
+                                                        <i class="fas fa-check"></i> Completed!
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-success" onclick="markComplete({{ lesson.id }}, this)">
+                                                        <i class="fas fa-check"></i> Mark Complete
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-muted">
+                                                <i class="fas fa-lock me-1"></i>
+                                                Enroll in this course to access lesson content
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No lessons available yet</h5>
+                        <p class="text-muted">The instructor is preparing course content. Check back soon!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Course Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 text-olive"><i class="fas fa-info me-2"></i>Course Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="course-stats">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <div class="text-olive fw-bold fs-4">{{ course.lessons|length if course.lessons else 0 }}</div>
+                            <small class="text-muted">Lessons</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-olive fw-bold fs-4">{{ course.duration_weeks }}</div>
+                            <small class="text-muted">Weeks</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="instructor-info">
+                    <h6 class="text-olive">Instructor</h6>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-olive text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                             style="width: 40px; height: 40px;">
+                            {{ course.instructor.first_name[0] }}{{ course.instructor.last_name[0] }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ course.instructor.first_name }} {{ course.instructor.last_name }}</div>
+                            <small class="text-muted">{{ course.instructor.email }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        {% if is_enrolled %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-olive"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if 'user_id' in session %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-olive">
+                                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                            </a>
+                            <a href="#" class="btn btn-outline-olive">
+                                <i class="fas fa-download"></i> Download Resources
+                            </a>
+                            <a href="#" class="btn btn-outline-olive">
+                                <i class="fas fa-certificate"></i> View Certificate
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
                             {% endfor %}
                         </div>
                     {% else %}

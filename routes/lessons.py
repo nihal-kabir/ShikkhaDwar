@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from models import Lesson, Course, Progress, Resource, Quiz, db
 from functools import wraps
 import os
@@ -46,15 +46,15 @@ def complete_lesson(lesson_id):
         db.session.commit()
         
         # Check if request is AJAX (JSON)
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return {'success': True, 'message': 'Lesson marked as completed!'}
+        if request.is_json or request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Lesson marked as completed!'})
         else:
             flash('Lesson marked as completed!', 'success')
             return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return {'success': False, 'message': 'Error marking lesson as complete'}, 500
+        if request.is_json or request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Error marking lesson as complete'}), 500
         else:
             flash('Error marking lesson as complete', 'error')
             return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
@@ -70,4 +70,4 @@ def download_resource(resource_id):
 def track_time(lesson_id):
     # This endpoint would track time spent on lessons
     # For now, just return success
-    return {'status': 'success'}
+    return jsonify({'status': 'success'})

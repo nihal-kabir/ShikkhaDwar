@@ -67,3 +67,24 @@ def enroll_course(course_id):
     
     flash(f'Successfully enrolled in {course.title}!', 'success')
     return redirect(url_for('courses.course_detail', course_id=course_id))
+
+@courses_bp.route('/course/<int:course_id>/enroll', methods=['POST'])
+@login_required
+def ajax_enroll_course(course_id):
+    try:
+        course = Course.query.get_or_404(course_id)
+        
+        # Check if already enrolled
+        existing_enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first()
+        if existing_enrollment:
+            return jsonify({'success': False, 'message': 'You are already enrolled in this course!'})
+        
+        # Create enrollment
+        enrollment = Enrollment(user_id=session['user_id'], course_id=course_id)
+        db.session.add(enrollment)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': f'Successfully enrolled in {course.title}!'})
+    except Exception:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to enroll in course. Please try again.'})

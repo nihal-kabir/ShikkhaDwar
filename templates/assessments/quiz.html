@@ -1,66 +1,516 @@
-{%{% block title %}Quiz: {{ quiz.title }} - ShikkhaDwar{% endblock %}
+{% extends "base.html" %}
 
-{% block content %}tends "base.html" %}
-
-{% block title %}{{ quiz.title }} - University LMS{% endblock %}
+{% block title %}Quiz: {{ quiz.title }} - ShikkhaDwar{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
-                {% if quiz.time_limit %}
-                    <span id="quiz-timer" class="badge bg-warning fs-6" data-time-limit="{{ quiz.time_limit }}">
-                        {{ quiz.time_limit }}:00
-                    </span>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if quiz.description %}
-                    <div class="alert alert-info">
-                        {{ quiz.description }}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Quiz Header -->
+            <div class="card bg-gradient-olive text-white mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-1"><i class="fas fa-clipboard-check me-2"></i>{{ quiz.title }}</h3>
+                            <p class="mb-0 opacity-75">
+                                {% if quiz.due_date %}
+                                    Due: {{ quiz.due_date.strftime('%B %d, %Y at %I:%M %p') }}
+                                {% endif %}
+                                • Attempts: {{ attempts_left }}/{{ quiz.max_attempts }}
+                                • Passing Score: {{ quiz.passing_score }}%
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if quiz.time_limit %}
+                                <div id="quiz-timer" class="bg-white text-dark rounded px-3 py-2 d-inline-block" 
+                                     data-time-limit="{{ quiz.time_limit }}">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <span class="timer-display">{{ quiz.time_limit }}:00</span>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                {% endif %}
-                
-                <form id="quiz-form" method="POST" action="{{ url_for('assessments.submit_quiz', quiz_id=quiz.id) }}">
-                    {% for question in questions %}
-                        <div class="quiz-question">
-                            <h6>Question {{ loop.index }} ({{ question.points }} point{{ 's' if question.points != 1 else '' }})</h6>
-                            <p>{{ question.question_text }}</p>
-                            
-                            {% if question.question_type == 'mcq' %}
-                                {% set options = question.options|from_json if question.options else {} %}
+                </div>
+            </div>
+
+            <!-- Quiz Instructions -->
+            {% if quiz.instructions or quiz.description %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h5>
+                </div>
+                <div class="card-body">
+                    {% if quiz.instructions %}
+                        <div class="alert alert-primary">
+                            {{ quiz.instructions|safe }}
+                        </div>
+                    {% endif %}
+                    {% if quiz.description %}
+                        <p class="text-muted">{{ quiz.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quiz Form -->
+            <form id="quiz-form" method="POST" action="{{ url_for('assessments.submit_quiz', quiz_id=quiz.id) }}">
+                <!-- Progress Bar -->
+                <div class="card mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Progress</span>
+                            <span id="progress-text" class="text-muted">0 of {{ questions|length }} answered</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <progress id="quiz-progress" class="progress-bar bg-success" value="0" max="100" 
+                                     style="width: 100%; height: 8px; appearance: none;">
+                                0% complete
+                            </progress>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions -->
+                {% for question in questions %}
+                <div class="card mb-4 question-card" data-question="{{ loop.index0 }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <span class="badge bg-olive me-2">{{ loop.index }}</span>
+                            Question {{ loop.index }}
+                        </h5>
+                        <span class="badge bg-secondary">{{ question.points }} point{{ 's' if question.points != 1 else '' }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="question-text mb-3">
+                            {{ question.question_text|safe }}
+                        </div>
+                        
+                        {% if question.question_type == 'mcq' %}
+                            {% set options = question.options|from_json if question.options else {} %}
+                            <div class="quiz-options">
                                 {% for key, value in options.items() %}
-                                    <div class="quiz-option">
-                                        <label>
-                                            <input type="radio" name="question_{{ question.id }}" value="{{ key }}" required>
-                                            {{ key }}. {{ value }}
-                                        </label>
-                                    </div>
+                                <div class="form-check quiz-option mb-2">
+                                    <input type="radio" class="form-check-input" 
+                                           name="question_{{ question.id }}" 
+                                           value="{{ key }}" 
+                                           id="q{{ question.id }}_{{ key }}"
+                                           onchange="updateProgress()">
+                                    <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
+                                        <span class="option-letter">{{ key.upper() }}.</span> {{ value }}
+                                    </label>
+                                </div>
                                 {% endfor %}
-                            
-                            {% elif question.question_type == 'true_false' %}
-                                <div class="quiz-option">
-                                    <label>
-                                        <input type="radio" name="question_{{ question.id }}" value="true" required>
-                                        True
+                            </div>
+                        
+                        {% elif question.question_type == 'true_false' %}
+                            <div class="quiz-options">
+                                <div class="form-check quiz-option mb-2">
+                                    <input type="radio" class="form-check-input" 
+                                           name="question_{{ question.id }}" 
+                                           value="true" 
+                                           id="q{{ question.id }}_true"
+                                           onchange="updateProgress()">
+                                    <label class="form-check-label" for="q{{ question.id }}_true">
+                                        <i class="fas fa-check-circle text-success me-2"></i>True
                                     </label>
                                 </div>
-                                <div class="quiz-option">
-                                    <label>
-                                        <input type="radio" name="question_{{ question.id }}" value="false" required>
-                                        False
+                                    <input type="radio" class="form-check-input" 
+                                           name="question_{{ question.id }}" 
+                                           value="false" 
+                                           id="q{{ question.id }}_false"
+                                           onchange="updateProgress()">
+                                    <label class="form-check-label" for="q{{ question.id }}_false">
+                                        <i class="fas fa-times-circle text-danger me-2"></i>False
                                     </label>
                                 </div>
-                            
-                            {% elif question.question_type == 'short_answer' %}
-                                <textarea name="question_{{ question.id }}" class="form-control" rows="3" 
-                                         placeholder="Enter your answer..." required></textarea>
-                            
-                            {% elif question.question_type == 'essay' %}
-                                <textarea name="question_{{ question.id }}" class="form-control" rows="6" 
-                                         placeholder="Write your essay response..." required></textarea>
+                            </div>
+                        
+                        {% elif question.question_type == 'short_answer' %}
+                            <div class="form-group">
+                                <textarea name="question_{{ question.id }}" 
+                                         class="form-control" 
+                                         rows="3" 
+                                         placeholder="Enter your answer..."
+                                         onchange="updateProgress()"
+                                         required></textarea>
+                                <small class="form-text text-muted">Provide a brief answer (1-2 sentences).</small>
+                            </div>
+                        
+                        {% elif question.question_type == 'essay' %}
+                            <div class="form-group">
+                                <textarea name="question_{{ question.id }}" 
+                                         class="form-control" 
+                                         rows="8" 
+                                         placeholder="Write your detailed response..."
+                                         onchange="updateProgress()"
+                                         required></textarea>
+                                <small class="form-text text-muted">Provide a detailed essay response with examples and explanations.</small>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span id="word-count-{{ question.id }}">0 words</span> • 
+                                        <span id="char-count-{{ question.id }}">0 characters</span>
+                                    </small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Auto-Save Status -->
+                <div class="card mb-4">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center text-muted">
+                            <small><i class="fas fa-save me-1"></i>Auto-save: <span id="autosave-status">Ready</span></small>
+                            <small>Last saved: <span id="last-saved">Never</span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation and Submit -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="saveProgress()">
+                                        <i class="fas fa-save me-1"></i>Save Progress
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="reviewAnswers()">
+                                        <i class="fas fa-eye me-1"></i>Review
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="button" class="btn btn-warning me-2" onclick="confirmSubmit()" id="submit-btn">
+                                    <i class="fas fa-paper-plane me-1"></i>Submit Quiz
+                                </button>
+                                <input type="submit" style="display: none;" id="hidden-submit">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">
+                    <i class="fas fa-eye me-2"></i>Review Your Answers
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="review-content">
+                <!-- Review content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Editing</button>
+                <button type="button" class="btn btn-success" onclick="finalSubmit()">Submit Quiz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Submit Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Submit Quiz
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your quiz? Once submitted, you cannot make changes.</p>
+                <div class="alert alert-info">
+                    <strong>Summary:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><span id="answered-count">0</span> of {{ questions|length }} questions answered</li>
+                        <li><span id="unanswered-count">{{ questions|length }}</span> questions unanswered</li>
+                        {% if quiz.max_attempts > 1 %}
+                        <li>You have <span id="attempts-remaining">{{ quiz.max_attempts - (attempts_used or 0) }}</span> attempts remaining</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="finalSubmit()">Yes, Submit Quiz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let quizTimer;
+let timeRemaining;
+let autoSaveInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize timer if time limit exists
+    {% if quiz.time_limit %}
+    timeRemaining = {{ quiz.time_limit }} * 60; // Convert to seconds
+    startTimer();
+    {% endif %}
+    
+    // Initialize auto-save
+    startAutoSave();
+    
+    // Initialize progress tracking
+    updateProgress();
+    
+    // Add word count for essay questions
+    document.querySelectorAll('textarea[name^="question_"]').forEach(textarea => {
+        if (textarea.rows >= 6) { // Essay questions
+            const questionId = textarea.name.split('_')[1];
+            textarea.addEventListener('input', function() {
+                updateWordCount(questionId, this.value);
+            });
+        }
+    });
+    
+    // Warn before leaving page
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+});
+
+function startTimer() {
+    const timerDisplay = document.querySelector('.timer-display');
+    
+    quizTimer = setInterval(function() {
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        
+        timerDisplay.textContent = minutes.toString().padStart(2, '0') + ':' + 
+                                 seconds.toString().padStart(2, '0');
+        
+        // Change color when time is running low
+        const timerElement = document.getElementById('quiz-timer');
+        if (timeRemaining <= 300) { // 5 minutes
+            timerElement.className = 'bg-danger text-white rounded px-3 py-2 d-inline-block';
+        } else if (timeRemaining <= 600) { // 10 minutes
+            timerElement.className = 'bg-warning text-dark rounded px-3 py-2 d-inline-block';
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(quizTimer);
+            alert('Time is up! Submitting quiz automatically.');
+            document.getElementById('quiz-form').submit();
+        }
+    }, 1000);
+}
+
+function updateProgress() {
+    const totalQuestions = {{ questions|length }};
+    let answeredQuestions = 0;
+    
+    // Count answered questions
+    for (let i = 1; i <= totalQuestions; i++) {
+        const questionInputs = document.querySelectorAll(`input[name^="question_"], textarea[name^="question_"]`);
+        questionInputs.forEach(input => {
+            if ((input.type === 'radio' && input.checked) || 
+                (input.type === 'textarea' && input.value.trim() !== '') ||
+                (input.tagName === 'TEXTAREA' && input.value.trim() !== '')) {
+                const questionName = input.name;
+                if (!document.querySelector(`input[name="${questionName}"][data-counted], textarea[name="${questionName}"][data-counted]`)) {
+                    input.setAttribute('data-counted', 'true');
+                    answeredQuestions++;
+                }
+            }
+        });
+    }
+    
+    const progressPercentage = (answeredQuestions / totalQuestions) * 100;
+    
+    // Update progress bar
+    const progressElement = document.getElementById('quiz-progress');
+    progressElement.value = progressPercentage;
+    progressElement.textContent = `${Math.round(progressPercentage)}% complete`;
+    document.getElementById('progress-text').textContent = `${answeredQuestions} of ${totalQuestions} answered`;
+    
+    // Update confirm modal counts
+    document.getElementById('answered-count').textContent = answeredQuestions;
+    document.getElementById('unanswered-count').textContent = totalQuestions - answeredQuestions;
+    
+    // Enable submit button if all questions answered
+    const submitBtn = document.getElementById('submit-btn');
+    if (answeredQuestions === totalQuestions) {
+        submitBtn.classList.remove('btn-warning');
+        submitBtn.classList.add('btn-success');
+        submitBtn.innerHTML = '<i class="fas fa-check me-1"></i>Submit Complete Quiz';
+    }
+}
+
+function updateWordCount(questionId, text) {
+    const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    const chars = text.length;
+    
+    document.getElementById(`word-count-${questionId}`).textContent = `${words} words`;
+    document.getElementById(`char-count-${questionId}`).textContent = `${chars} characters`;
+}
+
+function startAutoSave() {
+    autoSaveInterval = setInterval(saveProgress, 30000); // Save every 30 seconds
+}
+
+function saveProgress() {
+    const formData = new FormData(document.getElementById('quiz-form'));
+    const status = document.getElementById('autosave-status');
+    const lastSaved = document.getElementById('last-saved');
+    
+    status.textContent = 'Saving...';
+    
+    // Simulate auto-save (implement actual endpoint as needed)
+    setTimeout(() => {
+        status.textContent = 'Saved';
+        lastSaved.textContent = new Date().toLocaleTimeString();
+    }, 1000);
+}
+
+function hasUnsavedChanges() {
+    // Check if any form elements have been modified
+    const formElements = document.querySelectorAll('input, textarea, select');
+    return Array.from(formElements).some(element => {
+        return element.value !== element.defaultValue;
+    });
+}
+
+function reviewAnswers() {
+    const reviewContent = document.getElementById('review-content');
+    let reviewHTML = '<div class="list-group">';
+    
+    {% for question in questions %}
+    const questionValue = getQuestionValue({{ question.id }});
+    const status = questionValue ? 'answered' : 'unanswered';
+    const iconClass = questionValue ? 'fas fa-check-circle text-success' : 'fas fa-exclamation-triangle text-warning';
+    
+    reviewHTML += `
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">
+                        <i class="${iconClass} me-2"></i>
+                        Question {{ loop.index }}
+                    </h6>
+                    <p class="mb-1 text-muted">${'{{ question.question_text|e }}'.substring(0, 100)}...</p>
+                    ${questionValue ? `<small class="text-success">Answer: ${questionValue}</small>` : '<small class="text-warning">Not answered</small>'}
+                </div>
+            </div>
+        </div>
+    `;
+    {% endfor %}
+    
+    reviewHTML += '</div>';
+    reviewContent.innerHTML = reviewHTML;
+    
+    new bootstrap.Modal(document.getElementById('reviewModal')).show();
+}
+
+function getQuestionValue(questionId) {
+    const radioButton = document.querySelector(`input[name="question_${questionId}"]:checked`);
+    if (radioButton) return radioButton.value;
+    
+    const textarea = document.querySelector(`textarea[name="question_${questionId}"]`);
+    if (textarea) return textarea.value.substring(0, 50) + (textarea.value.length > 50 ? '...' : '');
+    
+    return null;
+}
+
+function confirmSubmit() {
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+function finalSubmit() {
+    // Close modals
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
+    bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide();
+    
+    // Stop timer and auto-save
+    if (quizTimer) clearInterval(quizTimer);
+    if (autoSaveInterval) clearInterval(autoSaveInterval);
+    
+    // Submit form
+    document.getElementById('quiz-form').submit();
+}
+</script>
+
+<style>
+.question-card {
+    transition: all 0.3s ease;
+}
+
+.question-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.quiz-option {
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.quiz-option:hover {
+    background-color: var(--olive-light-bg);
+}
+
+.quiz-option .form-check-input:checked + .form-check-label {
+    color: var(--olive-primary);
+    font-weight: 600;
+}
+
+.option-letter {
+    font-weight: 600;
+    color: var(--olive-primary);
+}
+
+.bg-gradient-olive {
+    background: linear-gradient(135deg, var(--olive-primary) 0%, var(--olive-dark) 100%);
+}
+
+#quiz-timer {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress {
+    background-color: rgba(107, 114, 128, 0.1);
+}
+
+.bg-olive {
+    background-color: var(--olive-primary) !important;
+}
+
+@media (max-width: 768px) {
+    .question-card {
+        margin-bottom: 1rem;
+    }
+    
+    .quiz-option {
+        padding: 8px;
+    }
+    
+    #quiz-timer {
+        font-size: 1em;
+        padding: 8px 12px !important;
+    }
+}
+</style>
+{% endblock %}
                             {% endif %}
                         </div>
                     {% endfor %}
