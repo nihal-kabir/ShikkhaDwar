@@ -199,7 +199,39 @@ def manage_quiz(quiz_id):
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     questions = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order_num).all()
-    return render_template('instructor/manage_quiz.html', quiz=quiz, questions=questions)
+
+    # Get all quiz attempts with student information
+    attempts = QuizAttempt.query.filter_by(quiz_id=quiz_id).order_by(QuizAttempt.submitted_at.desc()).all()
+
+    # Group attempts by student
+    student_stats = {}
+    for attempt in attempts:
+        if attempt.user_id not in student_stats:
+            user = User.query.get(attempt.user_id)
+            student_stats[attempt.user_id] = {
+                'user': user,
+                'attempts': [],
+                'attempt_count': 0,
+                'best_score': 0,
+                'best_percentage': 0,
+                'latest_attempt': None
+            }
+
+        student_stats[attempt.user_id]['attempts'].append(attempt)
+        student_stats[attempt.user_id]['attempt_count'] += 1
+
+        # Calculate percentage
+        if attempt.max_score and attempt.max_score > 0:
+            percentage = (attempt.score / attempt.max_score) * 100
+            if percentage > student_stats[attempt.user_id]['best_percentage']:
+                student_stats[attempt.user_id]['best_score'] = attempt.score
+                student_stats[attempt.user_id]['best_percentage'] = percentage
+
+        # Track latest attempt
+        if not student_stats[attempt.user_id]['latest_attempt'] or attempt.submitted_at > student_stats[attempt.user_id]['latest_attempt'].submitted_at:
+            student_stats[attempt.user_id]['latest_attempt'] = attempt
+
+    return render_template('instructor/manage_quiz.html', quiz=quiz, questions=questions, student_stats=student_stats, attempts=attempts)
 
 @instructor_bp.route('/instructor/quiz/<int:quiz_id>/toggle-publish', methods=['POST'])
 @instructor_required
@@ -314,29 +346,36 @@ def create_question(quiz_id):
 
             options = None
             correct_answer = None
+            question_type = request.form.get('question_type')
 
-            if request.form['question_type'] == 'mcq':
+            if question_type == 'mcq':
                 options = {
-                    'A': request.form['option_a'],
-                    'B': request.form['option_b'],
-                    'C': request.form['option_c'],
-                    'D': request.form['option_d']
+                    'A': request.form.get('option_a', ''),
+                    'B': request.form.get('option_b', ''),
+                    'C': request.form.get('option_c', ''),
+                    'D': request.form.get('option_d', '')
                 }
                 options = json.dumps(options)
-                correct_answer = request.form['correct_answer']
-            elif request.form['question_type'] == 'true_false':
+                correct_answer = request.form.get('correct_answer', '')
+            elif question_type == 'true_false':
                 # Capitalize to match what students submit (True/False)
-                correct_answer = request.form['true_false_answer'].capitalize()
-            elif request.form['question_type'] == 'short_answer':
-                correct_answer = request.form['short_answer_text']
+                tf_answer = request.form.get('true_false_answer', '')
+                if tf_answer:
+                    correct_answer = tf_answer.capitalize()
+                else:
+                    raise ValueError('True/False answer is required')
+            elif question_type == 'short_answer':
+                correct_answer = request.form.get('short_answer_text', '')
+                if not correct_answer:
+                    raise ValueError('Short answer text is required')
             else:
                 # For essay types
                 correct_answer = request.form.get('correct_answer', '')
 
             question = Question(
                 quiz_id=quiz_id,
-                question_text=request.form['question_text'],
-                question_type=request.form['question_type'],
+                question_text=request.form.get('question_text', ''),
+                question_type=question_type,
                 options=options,
                 correct_answer=correct_answer,
                 points=int(request.form.get('points', 1)),

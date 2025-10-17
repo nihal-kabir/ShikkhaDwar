@@ -847,14 +847,29 @@ progress::-moz-progress-bar {
     margin-bottom: 0;
 }
 
+/* Progress Card */
+.modern-progress-card {
+    overflow: hidden;
+}
+
+.modern-progress-card .card-body {
+    padding: 1.5rem;
+    overflow: hidden;
+}
+
 /* Progress Circle */
 .progress-circle-container {
     position: relative;
     display: inline-block;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
 }
 
 .progress-circle-modern {
     position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .progress-ring {
@@ -876,12 +891,25 @@ progress::-moz-progress-bar {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+    width: 90px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .progress-percentage {
     font-weight: 700;
     color: var(--primary-color);
     margin-bottom: 0;
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
+.progress-text small {
+    font-size: 0.7rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .progress-stats {

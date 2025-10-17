@@ -130,6 +130,125 @@
                 </div>
             </div>
 
+            <!-- Student Attempts -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Student Attempts
+                        <span class="badge bg-info">{{ student_stats|length }} Students</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if student_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student Name</th>
+                                        <th>Email</th>
+                                        <th>Attempts</th>
+                                        <th>Best Score</th>
+                                        <th>Best Percentage</th>
+                                        <th>Latest Attempt</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_id, stats in student_stats.items() %}
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-user-circle text-primary"></i>
+                                                {{ stats.user.first_name }} {{ stats.user.last_name }}
+                                            </td>
+                                            <td>{{ stats.user.email }}</td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ stats.attempt_count }}</span>
+                                                / {{ quiz.max_attempts }}
+                                            </td>
+                                            <td><strong>{{ stats.best_score }} pts</strong></td>
+                                            <td>
+                                                {% if stats.best_percentage >= quiz.passing_score %}
+                                                    <span class="badge bg-success">{{ "%.1f"|format(stats.best_percentage) }}%</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ "%.1f"|format(stats.best_percentage) }}%</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if stats.latest_attempt %}
+                                                    <small class="text-muted">
+                                                        {{ stats.latest_attempt.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                                                    </small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if stats.best_percentage >= quiz.passing_score %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i> Passed
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-exclamation-circle"></i> Below Passing
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- Attempt History (Collapsible) -->
+                                        <tr class="collapse" id="attempts-{{ user_id }}">
+                                            <td colspan="7" class="bg-light">
+                                                <div class="p-3">
+                                                    <h6><i class="fas fa-history"></i> Attempt History</h6>
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Attempt #</th>
+                                                                <th>Score</th>
+                                                                <th>Percentage</th>
+                                                                <th>Time Taken</th>
+                                                                <th>Submitted At</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for attempt in stats.attempts %}
+                                                                <tr>
+                                                                    <td>{{ attempt.attempt_number }}</td>
+                                                                    <td>{{ attempt.score }} pts</td>
+                                                                    <td>
+                                                                        {% set percentage = (attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0 %}
+                                                                        {{ "%.1f"|format(percentage) }}%
+                                                                    </td>
+                                                                    <td>
+                                                                        {% if attempt.time_taken %}
+                                                                            {{ attempt.time_taken }} min
+                                                                        {% else %}
+                                                                            N/A
+                                                                        {% endif %}
+                                                                    </td>
+                                                                    <td>{{ attempt.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Click on a student row to expand and view detailed attempt history.
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                            <h5>No Student Attempts Yet</h5>
+                            <p>Students haven't taken this quiz yet. Make sure the quiz is published!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Quiz Settings -->
             <div class="card mt-4">
                 <div class="card-header">
@@ -235,6 +354,24 @@ function deleteQuestion(questionId) {
         });
     }
 }
+
+// Make student rows clickable to toggle attempt history
+document.addEventListener('DOMContentLoaded', function() {
+    const studentRows = document.querySelectorAll('.table tbody tr:not(.collapse)');
+    studentRows.forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+            // Get the next sibling (the collapsible row)
+            const detailRow = this.nextElementSibling;
+            if (detailRow && detailRow.classList.contains('collapse')) {
+                // Toggle the collapse using Bootstrap's Collapse API
+                const bsCollapse = new bootstrap.Collapse(detailRow, {
+                    toggle: true
+                });
+            }
+        });
+    });
+});
 </script>
 
 <!-- Delete Quiz Modal -->

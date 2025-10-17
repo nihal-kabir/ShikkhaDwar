@@ -57,40 +57,40 @@
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_answer" value="A">
+                                                        <input type="radio" name="correct_answer" value="A" class="mcq-required">
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control" name="option_a" placeholder="Option A" required>
+                                                <input type="text" class="form-control mcq-required" name="option_a" placeholder="Option A">
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_answer" value="B">
+                                                        <input type="radio" name="correct_answer" value="B" class="mcq-required">
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control" name="option_b" placeholder="Option B" required>
+                                                <input type="text" class="form-control mcq-required" name="option_b" placeholder="Option B">
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_answer" value="C">
+                                                        <input type="radio" name="correct_answer" value="C" class="mcq-required">
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control" name="option_c" placeholder="Option C" required>
+                                                <input type="text" class="form-control mcq-required" name="option_c" placeholder="Option C">
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_answer" value="D">
+                                                        <input type="radio" name="correct_answer" value="D" class="mcq-required">
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control" name="option_d" placeholder="Option D" required>
+                                                <input type="text" class="form-control mcq-required" name="option_d" placeholder="Option D">
                                             </div>
                                         </div>
                                     </div>
@@ -102,11 +102,11 @@
                                     <div class="form-group">
                                         <label>Correct Answer</label>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="true_false_answer" value="true" id="answerTrue">
+                                            <input class="form-check-input tf-required" type="radio" name="true_false_answer" value="true" id="answerTrue">
                                             <label class="form-check-label" for="answerTrue">True</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="true_false_answer" value="false" id="answerFalse">
+                                            <input class="form-check-input tf-required" type="radio" name="true_false_answer" value="false" id="answerFalse">
                                             <label class="form-check-label" for="answerFalse">False</label>
                                         </div>
                                     </div>
@@ -116,7 +116,7 @@
                                 <div id="shortAnswerOptions" style="display: none;">
                                     <div class="form-group">
                                         <label for="short_answer_text">Correct Answer *</label>
-                                        <input type="text" class="form-control" id="short_answer_text" name="short_answer_text" 
+                                        <input type="text" class="form-control sa-required" id="short_answer_text" name="short_answer_text"
                                                placeholder="Enter the correct answer">
                                         <small class="form-text text-muted">Case-insensitive matching will be used.</small>
                                     </div>
@@ -195,23 +195,31 @@
 <script>
 function updateQuestionType() {
     const questionType = document.getElementById('question_type').value;
-    
+
     // Hide all option containers
     document.getElementById('multipleChoiceOptions').style.display = 'none';
     document.getElementById('trueFalseOptions').style.display = 'none';
     document.getElementById('shortAnswerOptions').style.display = 'none';
     document.getElementById('essayOptions').style.display = 'none';
-    
-    // Show relevant container
+
+    // Remove required attribute from all type-specific fields
+    document.querySelectorAll('.mcq-required').forEach(el => el.removeAttribute('required'));
+    document.querySelectorAll('.tf-required').forEach(el => el.removeAttribute('required'));
+    document.querySelectorAll('.sa-required').forEach(el => el.removeAttribute('required'));
+
+    // Show relevant container and add required attributes
     switch(questionType) {
         case 'mcq':
             document.getElementById('multipleChoiceOptions').style.display = 'block';
+            document.querySelectorAll('.mcq-required').forEach(el => el.setAttribute('required', 'required'));
             break;
         case 'true_false':
             document.getElementById('trueFalseOptions').style.display = 'block';
+            document.querySelectorAll('.tf-required').forEach(el => el.setAttribute('required', 'required'));
             break;
         case 'short_answer':
             document.getElementById('shortAnswerOptions').style.display = 'block';
+            document.querySelectorAll('.sa-required').forEach(el => el.setAttribute('required', 'required'));
             break;
         case 'essay':
             document.getElementById('essayOptions').style.display = 'block';
@@ -224,36 +232,25 @@ function updateQuestionType() {
 // Form validation
 document.getElementById('questionForm').addEventListener('submit', function(e) {
     const questionType = document.getElementById('question_type').value;
-    
+
+    if (!questionType) {
+        e.preventDefault();
+        alert('Please select a question type.');
+        return;
+    }
+
     if (questionType === 'mcq') {
         const correctAnswer = document.querySelector('input[name="correct_answer"]:checked');
         if (!correctAnswer) {
             e.preventDefault();
-            alert('Please select the correct answer option.');
+            alert('Please select the correct answer option by clicking a radio button.');
             return;
-        }
-        
-        const options = ['option_a', 'option_b', 'option_c', 'option_d'];
-        for (let optionName of options) {
-            const option = document.querySelector(`input[name="${optionName}"]`);
-            if (!option.value.trim()) {
-                e.preventDefault();
-                alert('Please fill in all answer options.');
-                return;
-            }
         }
     } else if (questionType === 'true_false') {
         const answer = document.querySelector('input[name="true_false_answer"]:checked');
         if (!answer) {
             e.preventDefault();
             alert('Please select the correct answer (True or False).');
-            return;
-        }
-    } else if (questionType === 'short_answer') {
-        const answer = document.getElementById('short_answer_text').value;
-        if (!answer.trim()) {
-            e.preventDefault();
-            alert('Please provide the correct answer.');
             return;
         }
     }

@@ -41,10 +41,10 @@
                                                class="btn btn-sm btn-primary flex-grow-1">
                                                 <i class="fas fa-play"></i> Continue
                                             </a>
-                                            {% if enrollment.progress_percentage == 100 and not enrollment.certificate_issued %}
-                                                <a href="{{ url_for('student.generate_certificate', course_id=enrollment.course.id) }}"
+                                            {% if enrollment.progress_percentage == 100 %}
+                                                <a href="{{ url_for('student.download_certificate', course_id=enrollment.course.id) }}"
                                                    class="btn btn-sm btn-success">
-                                                    <i class="fas fa-certificate"></i> Certificate
+                                                    <i class="fas fa-download"></i> Certificate
                                                 </a>
                                             {% endif %}
                                         </div>
