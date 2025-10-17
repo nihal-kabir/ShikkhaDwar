@@ -155,18 +155,32 @@ def create_lesson(course_id):
 @instructor_required
 def create_quiz(course_id):
     course = Course.query.get_or_404(course_id)
-    
+
     if course.instructor_id != session['user_id']:
         flash(MSG_ACCESS_DENIED, 'error')
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
-    
+
+    # Get optional lesson_id from query parameter
+    lesson_id = request.args.get('lesson_id', type=int)
+    lesson = None
+    if lesson_id:
+        lesson = Lesson.query.get_or_404(lesson_id)
+        # Verify lesson belongs to this course
+        if lesson.course_id != course_id:
+            flash('Invalid lesson for this course.', 'error')
+            return redirect(url_for('instructor.manage_course', course_id=course_id))
+
     if request.method == 'POST':
         try:
+            # Get lesson_id from form (hidden field) or query param
+            form_lesson_id = request.form.get('lesson_id', type=int) or lesson_id
+
             quiz = Quiz(
                 title=request.form['title'],
                 description=request.form.get('description', ''),
                 instructions=request.form.get('instructions', ''),
                 course_id=course_id,
+                lesson_id=form_lesson_id,  # Attach to lesson if specified
                 quiz_type=request.form.get('quiz_type', 'lesson_quiz'),
                 time_limit=int(request.form.get('time_limit', 60)),
                 max_attempts=int(request.form.get('max_attempts', 3)),
@@ -184,9 +198,9 @@ def create_quiz(course_id):
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating quiz: {str(e)}', 'error')
-            return render_template('instructor/create_quiz.html', course=course)
+            return render_template('instructor/create_quiz.html', course=course, lesson=lesson)
 
-    return render_template('instructor/create_quiz.html', course=course)
+    return render_template('instructor/create_quiz.html', course=course, lesson=lesson)
 
 @instructor_bp.route('/instructor/quiz/<int:quiz_id>/manage')
 @instructor_required
