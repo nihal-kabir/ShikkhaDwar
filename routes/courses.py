@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from models import Course, User, Enrollment, Progress, db
 from functools import wraps
+from constants import ROLE_INSTRUCTOR
 
 courses_bp = Blueprint('courses', __name__)
 
@@ -53,17 +54,58 @@ def course_detail(course_id):
 @login_required
 def enroll_course(course_id):
     course = Course.query.get_or_404(course_id)
-    
+
+    # Get current user
+    user = User.query.get(session['user_id'])
+
+    # Check if user is an instructor
+    if user.role == ROLE_INSTRUCTOR:
+        flash('Instructors cannot enroll in courses. You can audit courses by viewing them directly.', 'warning')
+        return redirect(url_for('courses.course_detail', course_id=course_id))
+
     # Check if already enrolled
     existing_enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first()
     if existing_enrollment:
         flash('You are already enrolled in this course!', 'warning')
         return redirect(url_for('courses.course_detail', course_id=course_id))
-    
+
     # Create enrollment
     enrollment = Enrollment(user_id=session['user_id'], course_id=course_id)
     db.session.add(enrollment)
     db.session.commit()
-    
+
     flash(f'Successfully enrolled in {course.title}!', 'success')
     return redirect(url_for('courses.course_detail', course_id=course_id))
+
+@courses_bp.route('/unenroll/<int:course_id>', methods=['POST'])
+@login_required
+def unenroll_course(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    # Get current user
+    user = User.query.get(session['user_id'])
+
+    # Check if user is an instructor (instructors can't be enrolled anyway)
+    if user.role == ROLE_INSTRUCTOR:
+        flash('Instructors are not enrolled in courses.', 'warning')
+        return redirect(url_for('courses.course_detail', course_id=course_id))
+
+    # Check if actually enrolled
+    enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first()
+    if not enrollment:
+        flash('You are not enrolled in this course.', 'warning')
+        return redirect(url_for('courses.course_detail', course_id=course_id))
+
+    try:
+        # Delete the enrollment and associated progress records
+        # Note: Progress records will be deleted due to cascade delete in the model
+        db.session.delete(enrollment)
+        db.session.commit()
+
+        flash(f'You have been unenrolled from {course.title}.', 'info')
+        return redirect(url_for('courses.course_catalog'))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error unenrolling from course: {str(e)}', 'error')
+        return redirect(url_for('courses.course_detail', course_id=course_id))

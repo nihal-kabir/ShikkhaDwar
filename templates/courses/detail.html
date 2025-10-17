@@ -173,10 +173,10 @@ function showToast(message, type) {
                                                 </div>
                                             {% endif %}
                                             
-                                            {% if is_enrolled %}
+                                            {% if is_enrolled and session.role != 'instructor' %}
                                                 <div class="mt-3">
                                                     <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-play"></i> 
+                                                        <i class="fas fa-play"></i>
                                                         {% if progress_data.get(lesson.id) and progress_data[lesson.id].completed %}
                                                             Resume Lesson
                                                         {% else %}
@@ -193,6 +193,12 @@ function showToast(message, type) {
                                                             <i class="fas fa-check"></i> Mark Complete
                                                         </button>
                                                     {% endif %}
+                                                </div>
+                                            {% elif session.role == 'instructor' %}
+                                                <div class="mt-3">
+                                                    <p class="text-muted small mb-0">
+                                                        <i class="fas fa-info-circle"></i> You can view the lesson content above, but cannot track progress as an instructor.
+                                                    </p>
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -220,7 +226,14 @@ function showToast(message, type) {
                 </ul>
                 
                 {% if session.user_id %}
-                    {% if is_enrolled %}
+                    {% if session.role == 'instructor' %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> You are viewing this course as an instructor. Instructors can audit courses but cannot enroll.
+                        </div>
+                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-arrow-left"></i> Back to Courses
+                        </a>
+                    {% elif is_enrolled %}
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i> You are enrolled in this course!
                         </div>
