@@ -239,8 +239,22 @@
                 <div class="card-body text-center">
                     {% set total_count = lessons|length %}
                     {% set completed_count = progress_data.values()|selectattr('completed')|list|length %}
-                    {% set progress_percentage = (completed_count / total_count * 100) if total_count > 0 else 0 %}
-                    
+                    {% set lessons_complete = (completed_count == total_count) if total_count > 0 else True %}
+
+                    {# Calculate overall progress including quizzes #}
+                    {% if lessons_complete and quizzes_passed %}
+                        {% set progress_percentage = 100 %}
+                    {% elif total_count > 0 %}
+                        {% set lesson_progress = (completed_count / total_count * 100) %}
+                        {% if total_quiz_count > 0 and not quizzes_passed %}
+                            {% set progress_percentage = [lesson_progress, 99]|min %}
+                        {% else %}
+                            {% set progress_percentage = lesson_progress %}
+                        {% endif %}
+                    {% else %}
+                        {% set progress_percentage = 0 %}
+                    {% endif %}
+
                     <div class="progress-circle-container mb-4">
                         <div class="progress-circle-modern" data-percentage="{{ progress_percentage }}">
                             <svg class="progress-ring" width="120" height="120">
@@ -266,18 +280,36 @@
                             <div class="col-6">
                                 <div class="stat-item">
                                     <h4 class="stat-number text-success">{{ completed_count }}</h4>
-                                    <small class="text-muted">Completed</small>
+                                    <small class="text-muted">Lessons Done</small>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="stat-item">
                                     <h4 class="stat-number text-primary">{{ total_count - completed_count }}</h4>
-                                    <small class="text-muted">Remaining</small>
+                                    <small class="text-muted">Lessons Left</small>
                                 </div>
                             </div>
                         </div>
+
+                        {% if total_quiz_count > 0 %}
+                        <div class="row text-center mt-2">
+                            <div class="col-12">
+                                <div class="stat-item">
+                                    <h4 class="stat-number {% if quizzes_passed %}text-success{% else %}text-warning{% endif %}">
+                                        {{ passed_quiz_count }}/{{ total_quiz_count }}
+                                    </h4>
+                                    <small class="text-muted">
+                                        Quizzes Passed
+                                        {% if not quizzes_passed %}
+                                            <i class="fas fa-exclamation-triangle text-warning ms-1" title="You must pass all quizzes to complete the course"></i>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
-                    
+
                     {% if progress_percentage == 100 %}
                     <div class="completion-celebration mt-4">
                         <div class="celebration-icon mb-3">

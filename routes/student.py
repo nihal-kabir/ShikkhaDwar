@@ -22,26 +22,85 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def check_all_quizzes_passed(user_id, course_id):
+    """
+    Check if student has passed all published quizzes for a course
+    Returns (all_passed: bool, passed_count: int, total_count: int)
+    """
+    # Get all published quizzes for the course
+    quizzes = Quiz.query.filter_by(course_id=course_id, is_published=True).all()
+
+    if not quizzes:
+        # No quizzes means no quiz requirement
+        return True, 0, 0
+
+    passed_count = 0
+    total_count = len(quizzes)
+
+    for quiz in quizzes:
+        # Get best attempt for this quiz
+        attempts = QuizAttempt.query.filter_by(
+            user_id=user_id,
+            quiz_id=quiz.id
+        ).all()
+
+        if not attempts:
+            # Student hasn't attempted this quiz
+            continue
+
+        # Calculate best percentage
+        best_percentage = 0
+        for attempt in attempts:
+            if attempt.max_score > 0:
+                percentage = (attempt.score / attempt.max_score) * 100
+                if percentage > best_percentage:
+                    best_percentage = percentage
+
+        # Check if passed
+        if best_percentage >= quiz.passing_score:
+            passed_count += 1
+
+    all_passed = (passed_count == total_count)
+    return all_passed, passed_count, total_count
+
 @student_bp.route('/student/dashboard')
 @login_required
 def dashboard():
     user = User.query.get(session['user_id'])
     enrollments = Enrollment.query.filter_by(user_id=session['user_id']).all()
-    
-    # Calculate progress for each enrollment
+
+    # Calculate progress for each enrollment (including lessons AND quizzes)
     for enrollment in enrollments:
+        # Count completed lessons
         total_lessons = Lesson.query.filter_by(course_id=enrollment.course_id).count()
         completed_lessons = Progress.query.join(Lesson).filter(
             Progress.user_id == session['user_id'],
             Progress.completed == True,
             Lesson.course_id == enrollment.course_id
         ).count()
-        
-        if total_lessons > 0:
-            enrollment.progress_percentage = (completed_lessons / total_lessons) * 100
+
+        # Check quiz completion
+        quizzes_passed, passed_quiz_count, total_quiz_count = check_all_quizzes_passed(
+            session['user_id'],
+            enrollment.course_id
+        )
+
+        # Calculate overall progress
+        # Course is 100% complete only if BOTH lessons and quizzes are done
+        lessons_complete = (completed_lessons == total_lessons) if total_lessons > 0 else True
+
+        if lessons_complete and quizzes_passed:
+            enrollment.progress_percentage = 100
+        elif total_lessons > 0:
+            # Show lesson progress, but cap at 99% if quizzes aren't passed
+            lesson_progress = (completed_lessons / total_lessons) * 100
+            if total_quiz_count > 0 and not quizzes_passed:
+                enrollment.progress_percentage = min(lesson_progress, 99)
+            else:
+                enrollment.progress_percentage = lesson_progress
         else:
             enrollment.progress_percentage = 0
-    
+
     return render_template('student/dashboard.html', user=user, enrollments=enrollments)
 
 @student_bp.route('/student/progress/<int:course_id>')
@@ -64,7 +123,22 @@ def view_progress(course_id):
         attempts = QuizAttempt.query.filter_by(user_id=session['user_id'], quiz_id=quiz.id).order_by(QuizAttempt.attempt_number).all()
         quiz_attempts[quiz.id] = attempts
 
-    return render_template('student/progress.html', course=course, lessons=lessons, progress_data=progress_data, announcements=announcements, quizzes=quizzes, quiz_attempts=quiz_attempts)
+    # Check overall quiz completion status
+    quizzes_passed, passed_quiz_count, total_quiz_count = check_all_quizzes_passed(
+        session['user_id'],
+        course_id
+    )
+
+    return render_template('student/progress.html',
+                         course=course,
+                         lessons=lessons,
+                         progress_data=progress_data,
+                         announcements=announcements,
+                         quizzes=quizzes,
+                         quiz_attempts=quiz_attempts,
+                         quizzes_passed=quizzes_passed,
+                         passed_quiz_count=passed_quiz_count,
+                         total_quiz_count=total_quiz_count)
 
 @student_bp.route('/student/grades')
 @login_required
@@ -76,17 +150,27 @@ def view_grades():
 @login_required
 def generate_certificate(course_id):
     enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first_or_404()
-    
-    # Check if course is completed
+
+    # Check if all lessons are completed
     total_lessons = Lesson.query.filter_by(course_id=course_id).count()
     completed_lessons = Progress.query.join(Lesson).filter(
         Progress.user_id == session['user_id'],
         Progress.completed == True,
         Lesson.course_id == course_id
     ).count()
-    
+
     if completed_lessons < total_lessons:
         flash('You must complete all lessons to receive a certificate.', 'warning')
+        return redirect(url_for('student.view_progress', course_id=course_id))
+
+    # Check if all quizzes are passed
+    quizzes_passed, passed_count, total_count = check_all_quizzes_passed(
+        session['user_id'],
+        course_id
+    )
+
+    if not quizzes_passed:
+        flash(f'You must pass all quizzes to receive a certificate. ({passed_count}/{total_count} quizzes passed)', 'warning')
         return redirect(url_for('student.view_progress', course_id=course_id))
     
     # Check if certificate already exists
@@ -120,7 +204,7 @@ def download_certificate(course_id):
     """
     enrollment = Enrollment.query.filter_by(user_id=session['user_id'], course_id=course_id).first_or_404()
 
-    # Check if course is completed
+    # Check if all lessons are completed
     total_lessons = Lesson.query.filter_by(course_id=course_id).count()
     completed_lessons = Progress.query.join(Lesson).filter(
         Progress.user_id == session['user_id'],
@@ -130,6 +214,16 @@ def download_certificate(course_id):
 
     if completed_lessons < total_lessons:
         flash('You must complete all lessons to receive a certificate.', 'warning')
+        return redirect(url_for('student.view_progress', course_id=course_id))
+
+    # Check if all quizzes are passed
+    quizzes_passed, passed_count, total_count = check_all_quizzes_passed(
+        session['user_id'],
+        course_id
+    )
+
+    if not quizzes_passed:
+        flash(f'You must pass all quizzes to receive a certificate. ({passed_count}/{total_count} quizzes passed)', 'warning')
         return redirect(url_for('student.view_progress', course_id=course_id))
 
     # Check if certificate already exists, if not create it
