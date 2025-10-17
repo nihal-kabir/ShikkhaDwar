@@ -21,10 +21,21 @@ class Config:
     DB_PASSWORD = os.environ.get('DB_PASSWORD') or 'your_password_here'
     DB_NAME = os.environ.get('DB_NAME') or 'lms_db'
     
-    SQLALCHEMY_DATABASE_URI = (
-        "postgresql://root:jw5RKhRtB3ZNxXbl2eRVpAiNpNOC7JOU@dpg-d3c15eumcj7s73d6fl4g-a.oregon-postgres.render.com/shikkhadwar"
-        # f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+    # Get database URL from environment or build from components
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+    if DATABASE_URL:
+        # If DATABASE_URL is provided (e.g., from Render), use it and fix SSL mode
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        # Add sslmode parameter if connecting to remote database
+        if 'sslmode' not in DATABASE_URL:
+            separator = '&' if '?' in DATABASE_URL else '?'
+            DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        # Build from individual components for local development
+        SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 class DevelopmentConfig(Config):
     """Development configuration"""

@@ -263,22 +263,135 @@ def course_analytics(course_id):
 def update_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     course = Course.query.get_or_404(quiz.course_id)
-    
+
     if course.instructor_id != session['user_id']:
         flash(MSG_ACCESS_DENIED, 'error')
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
-    
+
     try:
         # Update quiz settings from form
         quiz.randomize_questions = 'randomize_questions' in request.form
         quiz.show_correct_answers = 'show_correct_answers' in request.form
         quiz.is_published = 'is_published' in request.form
-        
+
         db.session.commit()
         flash('Quiz settings updated successfully!', 'success')
-        
+
     except Exception as e:
         db.session.rollback()
         flash('Error updating quiz settings. Please try again.', 'error')
-    
+
     return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+
+@instructor_bp.route('/instructor/course/<int:course_id>/clone', methods=['POST'])
+@instructor_required
+def clone_course(course_id):
+    """
+    Clone a course with all its content (lessons, quizzes, questions, resources).
+    The cloned course will be unpublished and have '(Copy)' appended to the title.
+    """
+    original_course = Course.query.get_or_404(course_id)
+
+    # Verify instructor owns the original course
+    if original_course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        # Create new course with copied data
+        new_course = Course(
+            title=f"{original_course.title} (Copy)",
+            description=original_course.description,
+            category=original_course.category,
+            instructor_id=session['user_id'],
+            duration_weeks=original_course.duration_weeks,
+            is_published=False  # New course starts as unpublished
+        )
+        db.session.add(new_course)
+        db.session.flush()  # Get the new course ID
+
+        # Clone all lessons
+        lesson_mapping = {}  # Map old lesson IDs to new lesson IDs
+        for original_lesson in original_course.lessons:
+            new_lesson = Lesson(
+                title=original_lesson.title,
+                content=original_lesson.content,
+                video_url=original_lesson.video_url,
+                order_num=original_lesson.order_num,
+                course_id=new_course.id,
+                week_number=original_lesson.week_number
+            )
+            db.session.add(new_lesson)
+            db.session.flush()  # Get the new lesson ID
+            lesson_mapping[original_lesson.id] = new_lesson.id
+
+            # Clone resources for this lesson
+            for original_resource in original_lesson.resources:
+                new_resource = Resource(
+                    title=original_resource.title,
+                    filename=original_resource.filename,
+                    file_path=original_resource.file_path,
+                    file_type=original_resource.file_type,
+                    lesson_id=new_lesson.id
+                )
+                db.session.add(new_resource)
+
+        # Clone all quizzes
+        for original_quiz in original_course.quizzes:
+            # Map lesson_id if the quiz is embedded in a lesson
+            new_lesson_id = None
+            if original_quiz.lesson_id:
+                new_lesson_id = lesson_mapping.get(original_quiz.lesson_id)
+
+            new_quiz = Quiz(
+                title=original_quiz.title,
+                description=original_quiz.description,
+                instructions=original_quiz.instructions,
+                course_id=new_course.id,
+                lesson_id=new_lesson_id,
+                quiz_type=original_quiz.quiz_type,
+                time_limit=original_quiz.time_limit,
+                max_attempts=original_quiz.max_attempts,
+                passing_score=original_quiz.passing_score,
+                randomize_questions=original_quiz.randomize_questions,
+                show_correct_answers=original_quiz.show_correct_answers,
+                is_published=False,  # Unpublish quizzes in cloned course
+                due_date=original_quiz.due_date
+            )
+            db.session.add(new_quiz)
+            db.session.flush()  # Get the new quiz ID
+
+            # Clone all questions for this quiz
+            for original_question in original_quiz.questions:
+                new_question = Question(
+                    quiz_id=new_quiz.id,
+                    question_text=original_question.question_text,
+                    question_type=original_question.question_type,
+                    options=original_question.options,
+                    correct_answer=original_question.correct_answer,
+                    points=original_question.points,
+                    order_num=original_question.order_num
+                )
+                db.session.add(new_question)
+
+        # Clone announcements (optional - instructor may want fresh start)
+        # Uncomment if you want to clone announcements too
+        # for original_announcement in original_course.announcements:
+        #     new_announcement = Announcement(
+        #         title=original_announcement.title,
+        #         content=original_announcement.content,
+        #         course_id=new_course.id,
+        #         author_id=session['user_id'],
+        #         is_urgent=original_announcement.is_urgent
+        #     )
+        #     db.session.add(new_announcement)
+
+        db.session.commit()
+
+        flash(f'Course "{original_course.title}" cloned successfully! The new course is unpublished.', 'success')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=new_course.id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error cloning course: {str(e)}', 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
