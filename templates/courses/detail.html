@@ -237,9 +237,12 @@ function showToast(message, type) {
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i> You are enrolled in this course!
                         </div>
-                        <a href="{{ url_for('student.view_progress', course_id=course.id) }}" class="btn btn-primary w-100">
+                        <a href="{{ url_for('student.view_progress', course_id=course.id) }}" class="btn btn-primary w-100 mb-2">
                             <i class="fas fa-play"></i> Continue Learning
                         </a>
+                        <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#unenrollModal">
+                            <i class="fas fa-sign-out-alt"></i> Unenroll from Course
+                        </button>
                     {% else %}
                         <form method="POST" action="{{ url_for('courses.enroll_course', course_id=course.id) }}">
                             <button type="submit" class="btn btn-success w-100">
@@ -276,4 +279,42 @@ function showToast(message, type) {
         {% endif %}
     </div>
 </div>
+
+<!-- Unenroll Confirmation Modal -->
+{% if is_enrolled and session.role != 'instructor' %}
+<div class="modal fade" id="unenrollModal" tabindex="-1" aria-labelledby="unenrollModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unenrollModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Unenroll from Course
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to unenroll from <strong>{{ course.title }}</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Your progress in all lessons will be lost</li>
+                        <li>Your quiz scores and attempts will be deleted</li>
+                        <li>You will need to re-enroll to access course content</li>
+                        <li>This action cannot be undone</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="{{ url_for('courses.unenroll_course', course_id=course.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Yes, Unenroll Me
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
