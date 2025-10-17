@@ -161,26 +161,31 @@ def create_quiz(course_id):
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
-        quiz = Quiz(
-            title=request.form['title'],
-            description=request.form['description'],
-            instructions=request.form.get('instructions', ''),
-            course_id=course_id,
-            quiz_type=request.form.get('quiz_type', 'lesson_quiz'),
-            time_limit=int(request.form.get('time_limit', 60)),
-            max_attempts=int(request.form.get('max_attempts', 3)),
-            passing_score=int(request.form.get('passing_score', 70)),
-            randomize_questions='randomize_questions' in request.form,
-            show_correct_answers='show_correct_answers' in request.form,
-            is_published='is_published' in request.form
-        )
-        
-        db.session.add(quiz)
-        db.session.commit()
-        
-        flash('Quiz created successfully!', 'success')
-        return redirect(url_for('instructor.manage_quiz', quiz_id=quiz.id))
-    
+        try:
+            quiz = Quiz(
+                title=request.form['title'],
+                description=request.form.get('description', ''),
+                instructions=request.form.get('instructions', ''),
+                course_id=course_id,
+                quiz_type=request.form.get('quiz_type', 'lesson_quiz'),
+                time_limit=int(request.form.get('time_limit', 60)),
+                max_attempts=int(request.form.get('max_attempts', 3)),
+                passing_score=int(request.form.get('passing_score', 70)),
+                randomize_questions='randomize_questions' in request.form,
+                show_correct_answers='show_correct_answers' in request.form,
+                is_published='is_published' in request.form
+            )
+
+            db.session.add(quiz)
+            db.session.commit()
+
+            flash(f'Quiz "{quiz.title}" created successfully!', 'success')
+            return redirect(url_for('instructor.manage_quiz', quiz_id=quiz.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating quiz: {str(e)}', 'error')
+            return render_template('instructor/create_quiz.html', course=course)
+
     return render_template('instructor/create_quiz.html', course=course)
 
 @instructor_bp.route('/instructor/quiz/<int:quiz_id>/manage')
@@ -196,6 +201,101 @@ def manage_quiz(quiz_id):
     questions = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order_num).all()
     return render_template('instructor/manage_quiz.html', quiz=quiz, questions=questions)
 
+@instructor_bp.route('/instructor/quiz/<int:quiz_id>/toggle-publish', methods=['POST'])
+@instructor_required
+def toggle_publish_quiz(quiz_id):
+    """
+    Toggle the publish status of a quiz.
+    """
+    quiz = Quiz.query.get_or_404(quiz_id)
+    course = Course.query.get(quiz.course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        # Toggle the publish status
+        quiz.is_published = not quiz.is_published
+        db.session.commit()
+
+        if quiz.is_published:
+            flash(f'Quiz "{quiz.title}" has been published and is now visible to students!', 'success')
+        else:
+            flash(f'Quiz "{quiz.title}" has been unpublished and is now hidden from students.', 'info')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating quiz status: {str(e)}', 'error')
+
+    return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+
+@instructor_bp.route('/instructor/quiz/<int:quiz_id>/edit', methods=['GET', 'POST'])
+@instructor_required
+def edit_quiz(quiz_id):
+    """
+    Edit an existing quiz
+    """
+    quiz = Quiz.query.get_or_404(quiz_id)
+    course = Course.query.get(quiz.course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    if request.method == 'POST':
+        try:
+            quiz.title = request.form['title']
+            quiz.description = request.form.get('description', '')
+            quiz.instructions = request.form.get('instructions', '')
+            quiz.time_limit = int(request.form.get('time_limit', 60))
+            quiz.max_attempts = int(request.form.get('max_attempts', 3))
+            quiz.passing_score = int(request.form.get('passing_score', 70))
+            quiz.randomize_questions = 'randomize_questions' in request.form
+            quiz.show_correct_answers = 'show_correct_answers' in request.form
+            quiz.is_published = 'is_published' in request.form
+
+            db.session.commit()
+
+            flash(f'Quiz "{quiz.title}" updated successfully!', 'success')
+            return redirect(url_for('instructor.manage_quiz', quiz_id=quiz.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating quiz: {str(e)}', 'error')
+
+    return render_template('instructor/edit_quiz.html', quiz=quiz, course=course)
+
+@instructor_bp.route('/instructor/quiz/<int:quiz_id>/delete', methods=['POST'])
+@instructor_required
+def delete_quiz(quiz_id):
+    """
+    Delete a quiz and all its questions
+    """
+    quiz = Quiz.query.get_or_404(quiz_id)
+    course = Course.query.get(quiz.course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        course_id = quiz.course_id
+        quiz_title = quiz.title
+
+        # Delete quiz (questions will be cascade deleted)
+        db.session.delete(quiz)
+        db.session.commit()
+
+        flash(f'Quiz "{quiz_title}" has been deleted.', 'success')
+        return redirect(url_for('instructor.manage_course', course_id=course_id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting quiz: {str(e)}', 'error')
+        return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+
 @instructor_bp.route('/instructor/quiz/<int:quiz_id>/question/create', methods=['GET', 'POST'])
 @instructor_required
 def create_question(quiz_id):
@@ -207,47 +307,131 @@ def create_question(quiz_id):
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
     
     if request.method == 'POST':
-        # Get next order number
-        last_question = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order_num.desc()).first()
-        next_order = (last_question.order_num + 1) if last_question else 1
-        
-        options = None
-        correct_answer = None
-        
-        if request.form['question_type'] == 'mcq':
-            options = {
-                'A': request.form['option_a'],
-                'B': request.form['option_b'],
-                'C': request.form['option_c'],
-                'D': request.form['option_d']
-            }
-            options = json.dumps(options)
-            correct_answer = request.form['correct_answer']
-        elif request.form['question_type'] == 'true_false':
-            correct_answer = request.form['true_false_answer']
-        elif request.form['question_type'] == 'short_answer':
-            correct_answer = request.form['short_answer_text']
-        else:
-            # For essay types
-            correct_answer = request.form.get('correct_answer', '')
-        
-        question = Question(
-            quiz_id=quiz_id,
-            question_text=request.form['question_text'],
-            question_type=request.form['question_type'],
-            options=options,
-            correct_answer=correct_answer,
-            points=int(request.form.get('points', 1)),
-            order_num=next_order
-        )
-        
-        db.session.add(question)
-        db.session.commit()
-        
-        flash('Question added successfully!', 'success')
-        return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+        try:
+            # Get next order number
+            last_question = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order_num.desc()).first()
+            next_order = (last_question.order_num + 1) if last_question else 1
+
+            options = None
+            correct_answer = None
+
+            if request.form['question_type'] == 'mcq':
+                options = {
+                    'A': request.form['option_a'],
+                    'B': request.form['option_b'],
+                    'C': request.form['option_c'],
+                    'D': request.form['option_d']
+                }
+                options = json.dumps(options)
+                correct_answer = request.form['correct_answer']
+            elif request.form['question_type'] == 'true_false':
+                # Capitalize to match what students submit (True/False)
+                correct_answer = request.form['true_false_answer'].capitalize()
+            elif request.form['question_type'] == 'short_answer':
+                correct_answer = request.form['short_answer_text']
+            else:
+                # For essay types
+                correct_answer = request.form.get('correct_answer', '')
+
+            question = Question(
+                quiz_id=quiz_id,
+                question_text=request.form['question_text'],
+                question_type=request.form['question_type'],
+                options=options,
+                correct_answer=correct_answer,
+                points=int(request.form.get('points', 1)),
+                order_num=next_order
+            )
+
+            db.session.add(question)
+            db.session.commit()
+
+            flash('Question added successfully!', 'success')
+            return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding question: {str(e)}', 'error')
+            return render_template('instructor/create_question.html', quiz=quiz)
     
     return render_template('instructor/create_question.html', quiz=quiz)
+
+@instructor_bp.route('/instructor/question/<int:question_id>/edit', methods=['GET', 'POST'])
+@instructor_required
+def edit_question(question_id):
+    """
+    Edit an existing question
+    """
+    question = Question.query.get_or_404(question_id)
+    quiz = Quiz.query.get(question.quiz_id)
+    course = Course.query.get(quiz.course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    if request.method == 'POST':
+        try:
+            question.question_text = request.form['question_text']
+            question.question_type = request.form['question_type']
+            question.points = int(request.form.get('points', 1))
+
+            # Handle different question types
+            if request.form['question_type'] == 'mcq':
+                options = {
+                    'A': request.form['option_a'],
+                    'B': request.form['option_b'],
+                    'C': request.form['option_c'],
+                    'D': request.form['option_d']
+                }
+                question.options = json.dumps(options)
+                question.correct_answer = request.form['correct_answer']
+            elif request.form['question_type'] == 'true_false':
+                question.options = None
+                question.correct_answer = request.form['true_false_answer'].capitalize()
+            elif request.form['question_type'] == 'short_answer':
+                question.options = None
+                question.correct_answer = request.form['short_answer_text']
+            else:  # essay
+                question.options = None
+                question.correct_answer = request.form.get('correct_answer', '')
+
+            db.session.commit()
+
+            flash('Question updated successfully!', 'success')
+            return redirect(url_for('instructor.manage_quiz', quiz_id=quiz.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating question: {str(e)}', 'error')
+
+    return render_template('instructor/edit_question.html', question=question, quiz=quiz)
+
+@instructor_bp.route('/instructor/question/<int:question_id>/delete', methods=['POST'])
+@instructor_required
+def delete_question(question_id):
+    """
+    Delete a question
+    """
+    question = Question.query.get_or_404(question_id)
+    quiz = Quiz.query.get(question.quiz_id)
+    course = Course.query.get(quiz.course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        quiz_id = question.quiz_id
+        db.session.delete(question)
+        db.session.commit()
+
+        flash('Question deleted successfully!', 'success')
+        return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting question: {str(e)}', 'error')
+        return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
 
 @instructor_bp.route('/instructor/course/<int:course_id>/announcement', methods=['GET', 'POST'])
 @instructor_required

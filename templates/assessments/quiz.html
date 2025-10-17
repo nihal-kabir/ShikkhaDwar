@@ -1,71 +1,98 @@
-{%{% block title %}Quiz: {{ quiz.title }} - ShikkhaDwar{% endblock %}
+{% extends "base.html" %}
 
-{% block content %}tends "base.html" %}
-
-{% block title %}{{ quiz.title }} - University LMS{% endblock %}
+{% block title %}Quiz: {{ quiz.title }} - ShikkhaDwar{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
+            <div class="card-header d-flex justify-content-between align-items-center bg-gradient text-white">
+                <div>
+                    <h5 class="mb-0"><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
+                    <small>{{ quiz.description or '' }}</small>
+                </div>
                 {% if quiz.time_limit %}
-                    <span id="quiz-timer" class="badge bg-warning fs-6" data-time-limit="{{ quiz.time_limit }}">
-                        {{ quiz.time_limit }}:00
+                    <span id="quiz-timer" class="badge bg-warning text-dark fs-6" data-time-limit="{{ quiz.time_limit }}">
+                        <i class="fas fa-clock"></i> <span id="time-remaining">{{ quiz.time_limit }}:00</span>
                     </span>
                 {% endif %}
             </div>
             <div class="card-body">
-                {% if quiz.description %}
+                {% if quiz.instructions %}
                     <div class="alert alert-info">
-                        {{ quiz.description }}
+                        <i class="fas fa-info-circle"></i> <strong>Instructions:</strong>
+                        <p class="mb-0 mt-2">{{ quiz.instructions }}</p>
                     </div>
                 {% endif %}
-                
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Important:</strong> You have {{ quiz.max_attempts }} attempt{{ 's' if quiz.max_attempts != 1 else '' }} for this quiz.
+                    Passing score: {{ quiz.passing_score }}%
+                </div>
+
                 <form id="quiz-form" method="POST" action="{{ url_for('assessments.submit_quiz', quiz_id=quiz.id) }}">
                     {% for question in questions %}
-                        <div class="quiz-question">
-                            <h6>Question {{ loop.index }} ({{ question.points }} point{{ 's' if question.points != 1 else '' }})</h6>
-                            <p>{{ question.question_text }}</p>
-                            
-                            {% if question.question_type == 'mcq' %}
-                                {% set options = question.options|from_json if question.options else {} %}
-                                {% for key, value in options.items() %}
-                                    <div class="quiz-option">
-                                        <label>
-                                            <input type="radio" name="question_{{ question.id }}" value="{{ key }}" required>
-                                            {{ key }}. {{ value }}
+                        <div class="quiz-question card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h6 class="mb-0">Question {{ loop.index }}</h6>
+                                    <span class="badge bg-primary">{{ question.points }} point{{ 's' if question.points != 1 else '' }}</span>
+                                </div>
+                                <p class="question-text">{{ question.question_text }}</p>
+
+                                {% if question.question_type == 'mcq' %}
+                                    {% set options = question.options|from_json if question.options else {} %}
+                                    <div class="options-list">
+                                        {% for key, value in options.items() %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio"
+                                                       name="question_{{ question.id }}"
+                                                       id="q{{ question.id }}_{{ key }}"
+                                                       value="{{ key }}" required>
+                                                <label class="form-check-label" for="q{{ question.id }}_{{ key }}">
+                                                    <strong>{{ key }}.</strong> {{ value }}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                {% elif question.question_type == 'true_false' %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio"
+                                               name="question_{{ question.id }}"
+                                               id="q{{ question.id }}_true"
+                                               value="True" required>
+                                        <label class="form-check-label" for="q{{ question.id }}_true">
+                                            True
                                         </label>
                                     </div>
-                                {% endfor %}
-                            
-                            {% elif question.question_type == 'true_false' %}
-                                <div class="quiz-option">
-                                    <label>
-                                        <input type="radio" name="question_{{ question.id }}" value="true" required>
-                                        True
-                                    </label>
-                                </div>
-                                <div class="quiz-option">
-                                    <label>
-                                        <input type="radio" name="question_{{ question.id }}" value="false" required>
-                                        False
-                                    </label>
-                                </div>
-                            
-                            {% elif question.question_type == 'short_answer' %}
-                                <textarea name="question_{{ question.id }}" class="form-control" rows="3" 
-                                         placeholder="Enter your answer..." required></textarea>
-                            
-                            {% elif question.question_type == 'essay' %}
-                                <textarea name="question_{{ question.id }}" class="form-control" rows="6" 
-                                         placeholder="Write your essay response..." required></textarea>
-                            {% endif %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio"
+                                               name="question_{{ question.id }}"
+                                               id="q{{ question.id }}_false"
+                                               value="False" required>
+                                        <label class="form-check-label" for="q{{ question.id }}_false">
+                                            False
+                                        </label>
+                                    </div>
+
+                                {% elif question.question_type == 'short_answer' %}
+                                    <textarea name="question_{{ question.id }}" class="form-control" rows="3"
+                                             placeholder="Enter your answer..." required></textarea>
+
+                                {% elif question.question_type == 'essay' %}
+                                    <textarea name="question_{{ question.id }}" class="form-control" rows="6"
+                                             placeholder="Write your essay response..." required></textarea>
+                                {% endif %}
+                            </div>
                         </div>
                     {% endfor %}
-                    
-                    <div class="text-center mt-4">
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{{ url_for('student.view_progress', course_id=quiz.course_id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Course
+                        </a>
                         <button type="submit" class="btn btn-success btn-lg">
                             <i class="fas fa-check"></i> Submit Quiz
                         </button>
@@ -79,8 +106,29 @@
 
 {% block scripts %}
 <script>
+// Timer functionality
+{% if quiz.time_limit %}
+let timeLeft = {{ quiz.time_limit }} * 60; // Convert to seconds
+const timerElement = document.getElementById('time-remaining');
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+    if (timeLeft <= 0) {
+        alert('Time is up! The quiz will be submitted automatically.');
+        document.getElementById('quiz-form').submit();
+    }
+
+    timeLeft--;
+}
+
+setInterval(updateTimer, 1000);
+{% endif %}
+
 // Prevent form resubmission
-document.getElementById('quiz-form').addEventListener('submit', function() {
+document.getElementById('quiz-form').addEventListener('submit', function(e) {
     const submitBtn = this.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
@@ -119,9 +167,16 @@ form.addEventListener('submit', function() {
 });
 
 // Warning before leaving page
+let formSubmitted = false;
+form.addEventListener('submit', function() {
+    formSubmitted = true;
+});
+
 window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-    e.returnValue = 'Are you sure you want to leave? Your progress may be lost.';
+    if (!formSubmitted) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your progress may be lost.';
+    }
 });
 </script>
 {% endblock %}

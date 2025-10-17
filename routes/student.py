@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import User, Course, Enrollment, Progress, Lesson, QuizAttempt, Certificate, Announcement, db
+from models import User, Course, Enrollment, Progress, Lesson, QuizAttempt, Certificate, Announcement, Quiz, db
 from functools import wraps
 import uuid
 
@@ -41,6 +41,7 @@ def view_progress(course_id):
     course = Course.query.get_or_404(course_id)
     lessons = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order_num).all()
     announcements = Announcement.query.filter_by(course_id=course_id).order_by(Announcement.created_at.desc()).limit(5).all()
+    quizzes = Quiz.query.filter_by(course_id=course_id, is_published=True).all()
 
     # Get progress for each lesson
     progress_data = {}
@@ -48,7 +49,13 @@ def view_progress(course_id):
         progress = Progress.query.filter_by(user_id=session['user_id'], lesson_id=lesson.id).first()
         progress_data[lesson.id] = progress
 
-    return render_template('student/progress.html', course=course, lessons=lessons, progress_data=progress_data, announcements=announcements)
+    # Get quiz attempts for the student
+    quiz_attempts = {}
+    for quiz in quizzes:
+        attempts = QuizAttempt.query.filter_by(user_id=session['user_id'], quiz_id=quiz.id).order_by(QuizAttempt.attempt_number).all()
+        quiz_attempts[quiz.id] = attempts
+
+    return render_template('student/progress.html', course=course, lessons=lessons, progress_data=progress_data, announcements=announcements, quizzes=quizzes, quiz_attempts=quiz_attempts)
 
 @student_bp.route('/student/grades')
 @login_required

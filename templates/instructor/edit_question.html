@@ -8,60 +8,40 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-edit"></i> Edit Question</h2>
-                <div>
-                    <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Quiz
-                    </a>
-                    <button type="button" class="btn btn-danger ml-2" onclick="deleteQuestion()">
-                        <i class="fas fa-trash"></i> Delete Question
-                    </button>
-                </div>
+                <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Quiz
+                </a>
             </div>
 
             <!-- Quiz Info -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5><i class="fas fa-quiz"></i> {{ quiz.title }}</h5>
+                    <h5><i class="fas fa-question-circle"></i> {{ quiz.title }}</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="text-muted">{{ quiz.description }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-right">
-                                <span class="badge badge-info">
-                                    <i class="fas fa-questions"></i> 
-                                    {{ quiz.questions|length if quiz.questions else 0 }} questions
-                                </span>
-                                <span class="badge badge-secondary ml-2">
-                                    <i class="fas fa-clock"></i> 
-                                    {{ quiz.time_limit }} minutes
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-muted">{{ quiz.description or 'No description provided.' }}</p>
                 </div>
             </div>
 
-            <!-- Edit Question Form -->
+            <!-- Create Question Form -->
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-question-circle"></i> Question Details</h5>
+                    <h5><i class="fas fa-edit"></i> Question Details</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" id="editQuestionForm">
+                    <form method="POST" id="questionForm">
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="form-group">
                                     <label for="question_text">Question Text *</label>
-                                    <textarea class="form-control" id="question_text" name="question_text" rows="4" required>{{ question.question_text }}</textarea>
-                                    <small class="form-text text-muted">Enter the question that students will see.</small>
+                                    <textarea class="form-control" id="question_text" name="question_text" rows="4" required
+                                              placeholder="Enter your question here...">{{ question.question_text }}</textarea>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="question_type">Question Type *</label>
-                                    <select class="form-control" id="question_type" name="question_type" required onchange="toggleQuestionOptions()">
+                                    <select class="form-control" id="question_type" name="question_type" required onchange="updateQuestionType()">
+                                        <option value="">Select question type...</option>
                                         <option value="mcq" {% if question.question_type == 'mcq' %}selected{% endif %}>Multiple Choice</option>
                                         <option value="true_false" {% if question.question_type == 'true_false' %}selected{% endif %}>True/False</option>
                                         <option value="short_answer" {% if question.question_type == 'short_answer' %}selected{% endif %}>Short Answer</option>
@@ -70,164 +50,140 @@
                                 </div>
 
                                 <!-- Multiple Choice Options -->
-                                <div id="multipleChoiceOptions" class="form-group" style="display: {% if question.question_type == 'mcq' %}block{% else %}none{% endif %};">
-                                    <label>Answer Options *</label>
+                                {% set options = question.options|from_json if question.options else {} %}
+                                <div id="multipleChoiceOptions" style="display: {% if question.question_type == 'mcq' %}block{% else %}none{% endif %};">
+                                    <label>Answer Options</label>
                                     <div id="optionsContainer">
-                                        {% if question.options %}
-                                            {% for option in question.options %}
-                                            <div class="input-group mb-2 option-group">
+                                        <div class="form-group">
+                                            <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_option" value="{{ loop.index0 }}" 
-                                                               {% if option.is_correct %}checked{% endif %}>
+                                                        <input type="radio" name="correct_answer" value="A" {% if question.correct_answer == 'A' %}checked{% endif %}>
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control option-input" name="options[]" 
-                                                       value="{{ option.option_text }}" placeholder="Enter option text" required>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
+                                                <input type="text" class="form-control" name="option_a" placeholder="Option A" value="{{ options.get('A', '') }}" required>
                                             </div>
-                                            {% endfor %}
-                                        {% else %}
-                                            <div class="input-group mb-2 option-group">
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_option" value="0" checked>
+                                                        <input type="radio" name="correct_answer" value="B" {% if question.correct_answer == 'B' %}checked{% endif %}>
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control option-input" name="options[]" 
-                                                       placeholder="Enter option text" required>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
+                                                <input type="text" class="form-control" name="option_b" placeholder="Option B" value="{{ options.get('B', '') }}" required>
                                             </div>
-                                            <div class="input-group mb-2 option-group">
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <div class="input-group-text">
-                                                        <input type="radio" name="correct_option" value="1">
+                                                        <input type="radio" name="correct_answer" value="C" {% if question.correct_answer == 'C' %}checked{% endif %}>
                                                     </div>
                                                 </div>
-                                                <input type="text" class="form-control option-input" name="options[]" 
-                                                       placeholder="Enter option text" required>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
+                                                <input type="text" class="form-control" name="option_c" placeholder="Option C" value="{{ options.get('C', '') }}" required>
                                             </div>
-                                        {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_answer" value="D" {% if question.correct_answer == 'D' %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                                <input type="text" class="form-control" name="option_d" placeholder="Option D" value="{{ options.get('D', '') }}" required>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addOption()">
-                                        <i class="fas fa-plus"></i> Add Option
-                                    </button>
                                     <small class="form-text text-muted">Select the radio button next to the correct answer.</small>
                                 </div>
 
                                 <!-- True/False Options -->
-                                <div id="trueFalseOptions" class="form-group" style="display: {% if question.question_type == 'true_false' %}block{% else %}none{% endif %};">
-                                    <label>Correct Answer *</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="true_false_answer" id="true_answer" value="true" 
-                                               {% if question.correct_answer == 'true' %}checked{% endif %}>
-                                        <label class="form-check-label" for="true_answer">True</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="true_false_answer" id="false_answer" value="false"
-                                               {% if question.correct_answer == 'false' %}checked{% endif %}>
-                                        <label class="form-check-label" for="false_answer">False</label>
+                                <div id="trueFalseOptions" style="display: {% if question.question_type == 'true_false' %}block{% else %}none{% endif %};">
+                                    <div class="form-group">
+                                        <label>Correct Answer</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="true_false_answer" value="true" id="answerTrue"
+                                                   {% if question.correct_answer and question.correct_answer.lower() == 'true' %}checked{% endif %}>
+                                            <label class="form-check-label" for="answerTrue">True</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="true_false_answer" value="false" id="answerFalse"
+                                                   {% if question.correct_answer and question.correct_answer.lower() == 'false' %}checked{% endif %}>
+                                            <label class="form-check-label" for="answerFalse">False</label>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Short Answer/Essay Answer -->
-                                <div id="textAnswerOptions" class="form-group" style="display: {% if question.question_type in ['short_answer', 'essay'] %}block{% else %}none{% endif %};">
-                                    <label for="sample_answer">Sample Answer (Optional)</label>
-                                    <textarea class="form-control" id="sample_answer" name="sample_answer" rows="3" 
-                                              placeholder="Provide a sample answer for reference...">{{ question.sample_answer or '' }}</textarea>
-                                    <small class="form-text text-muted">This will help with grading and provide guidance to students.</small>
+                                <!-- Short Answer -->
+                                <div id="shortAnswerOptions" style="display: {% if question.question_type == 'short_answer' %}block{% else %}none{% endif %};">
+                                    <div class="form-group">
+                                        <label for="short_answer_text">Correct Answer *</label>
+                                        <input type="text" class="form-control" id="short_answer_text" name="short_answer_text"
+                                               value="{{ question.correct_answer if question.question_type == 'short_answer' else '' }}"
+                                               placeholder="Enter the correct answer">
+                                        <small class="form-text text-muted">Case-insensitive matching will be used.</small>
+                                    </div>
+                                </div>
+
+                                <!-- Essay Options -->
+                                <div id="essayOptions" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Essay questions require manual grading by the instructor.
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="grading_rubric">Grading Rubric (Optional)</label>
+                                        <textarea class="form-control" id="grading_rubric" name="grading_rubric" rows="3" 
+                                                  placeholder="Provide guidelines for grading this essay question..."></textarea>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="explanation">Explanation (Optional)</label>
                                     <textarea class="form-control" id="explanation" name="explanation" rows="3" 
-                                              placeholder="Explain the correct answer...">{{ question.explanation or '' }}</textarea>
-                                    <small class="form-text text-muted">This explanation will be shown to students after they submit their answer.</small>
+                                              placeholder="Provide an explanation for the correct answer..."></textarea>
+                                    <small class="form-text text-muted">This will be shown to students after they submit their answer.</small>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="points">Points *</label>
-                                    <input type="number" class="form-control" id="points" name="points" min="1" max="100" 
-                                           value="{{ question.points }}" required>
+                                    <label for="points">Points</label>
+                                    <input type="number" class="form-control" id="points" name="points"
+                                           min="1" value="{{ question.points }}" required>
                                     <small class="form-text text-muted">Points awarded for correct answer.</small>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="difficulty">Difficulty Level</label>
                                     <select class="form-control" id="difficulty" name="difficulty">
-                                        <option value="easy" {% if question.difficulty == 'easy' %}selected{% endif %}>Easy</option>
-                                        <option value="medium" {% if question.difficulty == 'medium' %}selected{% endif %}>Medium</option>
-                                        <option value="hard" {% if question.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="tags">Tags (Optional)</label>
                                     <input type="text" class="form-control" id="tags" name="tags" 
-                                           value="{{ question.tags or '' }}" placeholder="e.g., algebra, geometry">
+                                           placeholder="topic1, topic2, topic3">
                                     <small class="form-text text-muted">Comma-separated tags for organization.</small>
                                 </div>
 
-                                <div class="form-check mb-3" id="randomizeOptionsCheck" style="display: {% if question.question_type == 'mcq' %}block{% else %}none{% endif %};">
-                    <input type="checkbox" class="form-check-input" id="randomize_options" name="randomize_options" 
-                           {% if question.randomize_options %}checked{% endif %}>
-                    <label class="form-check-label" for="randomize_options">
-                        Randomize Options
-                    </label>
-                    <small class="form-text text-muted">Shuffle answer options for each student.</small>
-                </div>
-
                                 <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
-                                           {% if question.is_active %}checked{% endif %}>
-                                    <label class="form-check-label" for="is_active">
-                                        Active Question
+                                    <input type="checkbox" class="form-check-input" id="randomize_options" name="randomize_options">
+                                    <label class="form-check-label" for="randomize_options">
+                                        Randomize Options
                                     </label>
-                                    <small class="form-text text-muted">Include this question in the quiz.</small>
-                                </div>
-
-                                <!-- Question Statistics -->
-                                <div class="card mt-4">
-                                    <div class="card-header">
-                                        <h6><i class="fas fa-chart-bar"></i> Question Statistics</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row text-center">
-                                            <div class="col-6">
-                                                <div class="h5 mb-0">{{ question.attempts_count or 0 }}</div>
-                                                <small class="text-muted">Attempts</small>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="h5 mb-0">{{ "%.1f"|format(question.success_rate or 0) }}%</div>
-                                                <small class="text-muted">Success Rate</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <small class="form-text text-muted">Shuffle answer options for multiple choice questions.</small>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-group mt-4">
+                        <div class="form-group">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Update Question
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary ml-2" onclick="previewQuestion()">
-                                <i class="fas fa-eye"></i> Preview
                             </button>
                             <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary ml-2">
                                 <i class="fas fa-times"></i> Cancel
@@ -240,223 +196,71 @@
     </div>
 </div>
 
-<!-- Preview Modal -->
-<div class="modal fade" id="previewModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-eye"></i> Question Preview</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="previewContent">
-                <!-- Preview content will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-danger"></i> Delete Question</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this question? This action cannot be undone.</p>
-                <p class="text-danger"><strong>Warning:</strong> This will also delete all student responses to this question.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form method="POST" action="{{ url_for('instructor.delete_question', question_id=question.id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Delete Question
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-let optionCount = document.querySelectorAll('.option-group').length;
-
-function toggleQuestionOptions() {
+function updateQuestionType() {
     const questionType = document.getElementById('question_type').value;
-    const multipleChoice = document.getElementById('multipleChoiceOptions');
-    const trueFalse = document.getElementById('trueFalseOptions');
-    const textAnswer = document.getElementById('textAnswerOptions');
-    const randomizeCheck = document.getElementById('randomizeOptionsCheck');
     
-    // Hide all option types
-    multipleChoice.style.display = 'none';
-    trueFalse.style.display = 'none';
-    textAnswer.style.display = 'none';
-    randomizeCheck.style.display = 'none';
+    // Hide all option containers
+    document.getElementById('multipleChoiceOptions').style.display = 'none';
+    document.getElementById('trueFalseOptions').style.display = 'none';
+    document.getElementById('shortAnswerOptions').style.display = 'none';
+    document.getElementById('essayOptions').style.display = 'none';
     
-    // Show relevant option type
+    // Show relevant container
     switch(questionType) {
         case 'mcq':
-            multipleChoice.style.display = 'block';
-            randomizeCheck.style.display = 'block';
+            document.getElementById('multipleChoiceOptions').style.display = 'block';
             break;
         case 'true_false':
-            trueFalse.style.display = 'block';
+            document.getElementById('trueFalseOptions').style.display = 'block';
             break;
         case 'short_answer':
+            document.getElementById('shortAnswerOptions').style.display = 'block';
+            break;
         case 'essay':
-            textAnswer.style.display = 'block';
+            document.getElementById('essayOptions').style.display = 'block';
             break;
     }
 }
 
-function addOption() {
-    const container = document.getElementById('optionsContainer');
-    const optionHtml = `
-        <div class="input-group mb-2 option-group">
-            <div class="input-group-prepend">
-                <div class="input-group-text">
-                    <input type="radio" name="correct_option" value="${optionCount}">
-                </div>
-            </div>
-            <input type="text" class="form-control option-input" name="options[]" placeholder="Enter option text" required>
-            <div class="input-group-append">
-                <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', optionHtml);
-    optionCount++;
-    updateRadioValues();
-}
-
-function removeOption(button) {
-    if (document.querySelectorAll('.option-group').length > 2) {
-        button.closest('.option-group').remove();
-        updateRadioValues();
-    } else {
-        alert('You must have at least 2 options for multiple choice questions.');
-    }
-}
-
-function updateRadioValues() {
-    const radioButtons = document.querySelectorAll('input[name="correct_option"]');
-    radioButtons.forEach((radio, index) => {
-        radio.value = index;
-    });
-}
-
-function previewQuestion() {
-    const questionText = document.getElementById('question_text').value;
-    const questionType = document.getElementById('question_type').value;
-    const points = document.getElementById('points').value;
-    
-    let previewHtml = `
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <span><strong>Question Preview</strong></span>
-                <span class="badge badge-primary">${points} points</span>
-            </div>
-            <div class="card-body">
-                <p><strong>${questionText}</strong></p>
-    `;
-    
-    if (questionType === 'mcq') {
-        const options = document.querySelectorAll('.option-input');
-        previewHtml += '<div class="mt-3">';
-        options.forEach((option, index) => {
-            if (option.value.trim()) {
-                previewHtml += `
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="preview_answer" disabled>
-                        <label class="form-check-label">${option.value}</label>
-                    </div>
-                `;
-            }
-        });
-        previewHtml += '</div>';
-    } else if (questionType === 'true_false') {
-        previewHtml += `
-            <div class="mt-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="preview_answer" disabled>
-                    <label class="form-check-label">True</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="preview_answer" disabled>
-                    <label class="form-check-label">False</label>
-                </div>
-            </div>
-        `;
-    } else if (questionType === 'short_answer') {
-        previewHtml += '<input type="text" class="form-control mt-3" placeholder="Enter your answer..." disabled>';
-    } else if (questionType === 'essay') {
-        previewHtml += '<textarea class="form-control mt-3" rows="5" placeholder="Enter your essay answer..." disabled></textarea>';
-    }
-    
-    previewHtml += '</div></div>';
-    
-    document.getElementById('previewContent').innerHTML = previewHtml;
-    $('#previewModal').modal('show');
-}
-
-function deleteQuestion() {
-    $('#deleteModal').modal('show');
-}
+// Removed dynamic option functions since we're using fixed A, B, C, D options
 
 // Form validation
-document.getElementById('editQuestionForm').addEventListener('submit', function(e) {
+document.getElementById('questionForm').addEventListener('submit', function(e) {
     const questionType = document.getElementById('question_type').value;
     
     if (questionType === 'mcq') {
-        const options = document.querySelectorAll('.option-input');
-        const correctOption = document.querySelector('input[name="correct_option"]:checked');
-        
-        let validOptions = 0;
-        options.forEach(option => {
-            if (option.value.trim()) validOptions++;
-        });
-        
-        if (validOptions < 2) {
-            e.preventDefault();
-            alert('Please provide at least 2 options for multiple choice questions.');
-            return;
-        }
-        
-        if (!correctOption) {
+        const correctAnswer = document.querySelector('input[name="correct_answer"]:checked');
+        if (!correctAnswer) {
             e.preventDefault();
             alert('Please select the correct answer option.');
             return;
         }
+        
+        const options = ['option_a', 'option_b', 'option_c', 'option_d'];
+        for (let optionName of options) {
+            const option = document.querySelector(`input[name="${optionName}"]`);
+            if (!option.value.trim()) {
+                e.preventDefault();
+                alert('Please fill in all answer options.');
+                return;
+            }
+        }
     } else if (questionType === 'true_false') {
-        const trueFalseAnswer = document.querySelector('input[name="true_false_answer"]:checked');
-        if (!trueFalseAnswer) {
+        const answer = document.querySelector('input[name="true_false_answer"]:checked');
+        if (!answer) {
             e.preventDefault();
-            alert('Please select the correct answer for the true/false question.');
+            alert('Please select the correct answer (True or False).');
+            return;
+        }
+    } else if (questionType === 'short_answer') {
+        const answer = document.getElementById('short_answer_text').value;
+        if (!answer.trim()) {
+            e.preventDefault();
+            alert('Please provide the correct answer.');
             return;
         }
     }
 });
-
-// Auto-resize textareas
-document.querySelectorAll('textarea').forEach(textarea => {
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-    });
-});
-
-// Initialize the form
-toggleQuestionOptions();
 </script>
 {% endblock %}
