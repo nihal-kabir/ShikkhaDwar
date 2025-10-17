@@ -81,8 +81,9 @@ def manage_course(course_id):
     lessons = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order_num).all()
     quizzes = Quiz.query.filter_by(course_id=course_id).all()
     enrollments = Enrollment.query.filter_by(course_id=course_id).all()
-    
-    return render_template('instructor/manage_course.html', course=course, lessons=lessons, quizzes=quizzes, enrollments=enrollments)
+    announcements = Announcement.query.filter_by(course_id=course_id).order_by(Announcement.created_at.desc()).all()
+
+    return render_template('instructor/manage_course.html', course=course, lessons=lessons, quizzes=quizzes, enrollments=enrollments, announcements=announcements)
 
 @instructor_bp.route('/instructor/course/<int:course_id>/lesson/create', methods=['GET', 'POST'])
 @instructor_required

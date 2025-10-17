@@ -76,3 +76,57 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        flash('Please log in to access your profile.', 'warning')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(session['user_id'])
+
+    if request.method == 'POST':
+        # Update user information
+        user.first_name = request.form.get('first_name', user.first_name)
+        user.last_name = request.form.get('last_name', user.last_name)
+
+        # Check if email is being changed
+        new_email = request.form.get('email')
+        if new_email and new_email != user.email:
+            # Check if email is already taken by another user
+            existing_user = User.query.filter_by(email=new_email).first()
+            if existing_user and existing_user.id != user.id:
+                flash('Email already in use by another account.', 'error')
+                return render_template('auth/profile.html', user=user)
+            user.email = new_email
+
+        # Update password if provided
+        new_password = request.form.get('new_password')
+        current_password = request.form.get('current_password')
+
+        if new_password:
+            # Verify current password
+            if not current_password or not check_password_hash(user.password_hash, current_password):
+                flash('Current password is incorrect.', 'error')
+                return render_template('auth/profile.html', user=user)
+
+            # Update to new password
+            user.password_hash = generate_password_hash(new_password)
+
+        try:
+            db.session.commit()
+
+            # Update session if username display name changed
+            session['username'] = user.username
+
+            if new_password:
+                flash('Profile and password updated successfully!', 'success')
+            else:
+                flash('Profile updated successfully!', 'success')
+
+            return redirect(url_for('auth.profile'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating profile. Please try again.', 'error')
+
+    return render_template('auth/profile.html', user=user)

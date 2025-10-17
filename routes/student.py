@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import User, Course, Enrollment, Progress, Lesson, QuizAttempt, Certificate, db
+from models import User, Course, Enrollment, Progress, Lesson, QuizAttempt, Certificate, Announcement, db
 from functools import wraps
 import uuid
 
@@ -40,14 +40,15 @@ def dashboard():
 def view_progress(course_id):
     course = Course.query.get_or_404(course_id)
     lessons = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order_num).all()
-    
+    announcements = Announcement.query.filter_by(course_id=course_id).order_by(Announcement.created_at.desc()).limit(5).all()
+
     # Get progress for each lesson
     progress_data = {}
     for lesson in lessons:
         progress = Progress.query.filter_by(user_id=session['user_id'], lesson_id=lesson.id).first()
         progress_data[lesson.id] = progress
-    
-    return render_template('student/progress.html', course=course, lessons=lessons, progress_data=progress_data)
+
+    return render_template('student/progress.html', course=course, lessons=lessons, progress_data=progress_data, announcements=announcements)
 
 @student_bp.route('/student/grades')
 @login_required
