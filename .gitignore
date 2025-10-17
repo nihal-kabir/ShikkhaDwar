@@ -122,3 +122,8 @@ dmypy.json
 .DS_Store
 Thumbs.db
 .claude
+uploads/
+COURSE_CLONING_IMPLEMENTATION.md
+FEATURE_VERIFICATION_REPORT.md
+LMS_IMPLEMENTATION_GUIDE.md
+test_clone_feature.md

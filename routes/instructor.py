@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from models import User, Course, Lesson, Quiz, Question, Resource, Enrollment, Announcement, QuizAttempt, db
 from werkzeug.utils import secure_filename
 from functools import wraps
 from constants import (
-    MSG_ACCESS_DENIED, MSG_INSTRUCTOR_REQUIRED, ENDPOINT_INSTRUCTOR_MANAGE_COURSE, 
-    ENDPOINT_INSTRUCTOR_DASHBOARD, TEMPLATE_INSTRUCTOR_DASHBOARD, TEMPLATE_CREATE_COURSE, 
-    TEMPLATE_MANAGE_COURSE
+    MSG_ACCESS_DENIED, MSG_INSTRUCTOR_REQUIRED, ENDPOINT_INSTRUCTOR_MANAGE_COURSE,
+    ENDPOINT_INSTRUCTOR_DASHBOARD, TEMPLATE_INSTRUCTOR_DASHBOARD, TEMPLATE_CREATE_COURSE,
+    TEMPLATE_MANAGE_COURSE, ALLOWED_DOCUMENT_EXTENSIONS
 )
 import os
 import json
@@ -88,16 +88,16 @@ def manage_course(course_id):
 @instructor_required
 def create_lesson(course_id):
     course = Course.query.get_or_404(course_id)
-    
+
     if course.instructor_id != session['user_id']:
         flash(MSG_ACCESS_DENIED, 'error')
         return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
-    
+
     if request.method == 'POST':
         # Get next order number
         last_lesson = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order_num.desc()).first()
         next_order = (last_lesson.order_num + 1) if last_lesson else 1
-        
+
         lesson = Lesson(
             title=request.form['title'],
             content=request.form['content'],
@@ -106,13 +106,48 @@ def create_lesson(course_id):
             course_id=course_id,
             week_number=int(request.form.get('week_number', 1))
         )
-        
+
         db.session.add(lesson)
+        db.session.flush()  # Get the lesson ID before committing
+
+        # Handle file uploads
+        uploaded_files = request.files.getlist('resources')
+        if uploaded_files:
+            resources_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'resources')
+            os.makedirs(resources_dir, exist_ok=True)
+
+            for file in uploaded_files:
+                if file and file.filename:
+                    # Check if file extension is allowed
+                    file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                    if file_ext in ALLOWED_DOCUMENT_EXTENSIONS:
+                        filename = secure_filename(file.filename)
+                        # Add timestamp to avoid name conflicts
+                        import time
+                        timestamp = str(int(time.time()))
+                        unique_filename = f"{timestamp}_{filename}"
+                        file_path = os.path.join(resources_dir, unique_filename)
+
+                        # Save the file
+                        file.save(file_path)
+
+                        # Create resource record
+                        resource = Resource(
+                            title=filename,
+                            filename=filename,
+                            file_path=file_path,
+                            file_type=file_ext,
+                            lesson_id=lesson.id
+                        )
+                        db.session.add(resource)
+                    else:
+                        flash(f'File {file.filename} has an unsupported format and was skipped.', 'warning')
+
         db.session.commit()
-        
+
         flash('Lesson created successfully!', 'success')
         return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
-    
+
     return render_template('instructor/create_lesson.html', course=course)
 
 @instructor_bp.route('/instructor/course/<int:course_id>/quiz/create', methods=['GET', 'POST'])
