@@ -283,6 +283,35 @@ def update_quiz(quiz_id):
 
     return redirect(url_for('instructor.manage_quiz', quiz_id=quiz_id))
 
+@instructor_bp.route('/instructor/course/<int:course_id>/toggle-publish', methods=['POST'])
+@instructor_required
+def toggle_publish_course(course_id):
+    """
+    Toggle the publish status of a course between published and unpublished.
+    """
+    course = Course.query.get_or_404(course_id)
+
+    # Verify instructor owns the course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        # Toggle the publish status
+        course.is_published = not course.is_published
+        db.session.commit()
+
+        if course.is_published:
+            flash(f'Course "{course.title}" has been published and is now visible to students!', 'success')
+        else:
+            flash(f'Course "{course.title}" has been unpublished and is now hidden from students.', 'info')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating course status: {str(e)}', 'error')
+
+    return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
+
 @instructor_bp.route('/instructor/course/<int:course_id>/clone', methods=['POST'])
 @instructor_required
 def clone_course(course_id):

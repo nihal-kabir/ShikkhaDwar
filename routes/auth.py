@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, db
 from datetime import datetime, timezone
-from constants import TEMPLATE_LOGIN, TEMPLATE_REGISTER, ROLE_STUDENT
+from constants import TEMPLATE_LOGIN, TEMPLATE_REGISTER, ROLE_STUDENT, ROLE_INSTRUCTOR
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -14,16 +14,21 @@ def register():
         password = request.form['password']
         first_name = request.form['first_name']
         last_name = request.form['last_name']
-        
+        role = request.form.get('role', ROLE_STUDENT)  # Get role from form, default to student
+
+        # Validate role
+        if role not in [ROLE_STUDENT, ROLE_INSTRUCTOR]:
+            role = ROLE_STUDENT
+
         # Check if user exists
         if User.query.filter_by(username=username).first():
             flash('Username already exists!', 'error')
             return render_template(TEMPLATE_REGISTER)
-        
+
         if User.query.filter_by(email=email).first():
             flash('Email already registered!', 'error')
             return render_template(TEMPLATE_REGISTER)
-        
+
         # Create new user
         user = User(
             username=username,
@@ -31,7 +36,7 @@ def register():
             password_hash=generate_password_hash(password),
             first_name=first_name,
             last_name=last_name,
-            role=ROLE_STUDENT
+            role=role
         )
         
         db.session.add(user)
