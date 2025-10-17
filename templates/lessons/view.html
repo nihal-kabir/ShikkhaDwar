@@ -119,11 +119,21 @@
                 {% endif %}
                 
                 <div class="mt-4">
-                    <form method="POST" action="{{ url_for('lessons.complete_lesson', lesson_id=lesson.id) }}">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-check"></i> Mark as Complete
+                    {% if progress and progress.completed %}
+                        <button class="btn btn-success" disabled>
+                            <i class="fas fa-check-circle"></i> Completed
                         </button>
-                    </form>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-calendar-check"></i>
+                            Completed on {{ progress.completion_date.strftime('%B %d, %Y at %I:%M %p') if progress.completion_date else 'Unknown' }}
+                        </small>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('lessons.complete_lesson', lesson_id=lesson.id) }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Mark as Complete
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

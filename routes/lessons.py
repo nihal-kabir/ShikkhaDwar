@@ -60,7 +60,8 @@ def view_lesson(lesson_id):
         return render_template('lessons/view.html',
                              lesson=lesson,
                              embedded_quizzes=embedded_quizzes,
-                             quiz_attempts=quiz_attempts)
+                             quiz_attempts=quiz_attempts,
+                             progress=progress)
 
 @lessons_bp.route('/lesson/<int:lesson_id>/complete', methods=['POST'])
 @login_required

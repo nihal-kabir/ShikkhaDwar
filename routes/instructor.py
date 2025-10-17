@@ -697,3 +697,114 @@ def clone_course(course_id):
         db.session.rollback()
         flash(f'Error cloning course: {str(e)}', 'error')
         return redirect(url_for(ENDPOINT_INSTRUCTOR_MANAGE_COURSE, course_id=course_id))
+
+@instructor_bp.route('/instructor/course/<int:course_id>/grades')
+@instructor_required
+def view_course_grades(course_id):
+    """View all student grades for a course"""
+    course = Course.query.get_or_404(course_id)
+
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    # Get all enrollments for this course
+    enrollments = Enrollment.query.filter_by(course_id=course_id).all()
+
+    # Get all quizzes for this course
+    quizzes = Quiz.query.filter_by(course_id=course_id).all()
+
+    # Build student grade data
+    student_grades = []
+    for enrollment in enrollments:
+        student = enrollment.user
+        student_data = {
+            'user': student,
+            'enrollment': enrollment,
+            'quiz_attempts': []
+        }
+
+        # Get quiz attempts for this student
+        for quiz in quizzes:
+            attempts = QuizAttempt.query.filter_by(
+                user_id=student.id,
+                quiz_id=quiz.id
+            ).order_by(QuizAttempt.attempt_number.desc()).all()
+
+            if attempts:
+                # Get best attempt
+                best_attempt = max(attempts, key=lambda a: a.score if a.score else 0)
+                student_data['quiz_attempts'].append({
+                    'quiz': quiz,
+                    'attempts': attempts,
+                    'best_attempt': best_attempt
+                })
+
+        student_grades.append(student_data)
+
+    return render_template('instructor/course_grades.html',
+                         course=course,
+                         quizzes=quizzes,
+                         student_grades=student_grades)
+
+@instructor_bp.route('/instructor/quiz-attempt/<int:attempt_id>/update-grade', methods=['POST'])
+@instructor_required
+def update_quiz_grade(attempt_id):
+    """Manually update a quiz attempt grade"""
+    attempt = QuizAttempt.query.get_or_404(attempt_id)
+    quiz = attempt.quiz
+    course = quiz.course
+
+    # Verify instructor owns this course
+    if course.instructor_id != session['user_id']:
+        flash(MSG_ACCESS_DENIED, 'error')
+        return redirect(url_for(ENDPOINT_INSTRUCTOR_DASHBOARD))
+
+    try:
+        new_score = float(request.form.get('score', 0))
+        feedback = request.form.get('feedback', '').strip()
+
+        # Validate score
+        if new_score < 0 or new_score > attempt.max_score:
+            flash(f'Invalid score. Must be between 0 and {attempt.max_score}', 'warning')
+            return redirect(request.referrer or url_for('instructor.view_course_grades', course_id=course.id))
+
+        # Update the attempt score
+        attempt.score = new_score
+        attempt.is_graded = True
+
+        # Check if a Grade record exists, if not create one
+        from models import Grade
+        grade = Grade.query.filter_by(quiz_attempt_id=attempt.id).first()
+
+        if grade:
+            # Update existing grade
+            grade.points_earned = new_score
+            grade.max_points = attempt.max_score
+            grade.feedback = feedback
+            grade.graded_by = session['user_id']
+            grade.graded_at = db.func.now()
+        else:
+            # Create new grade record
+            grade = Grade(
+                user_id=attempt.user_id,
+                quiz_attempt_id=attempt.id,
+                points_earned=new_score,
+                max_points=attempt.max_score,
+                feedback=feedback,
+                graded_by=session['user_id']
+            )
+            db.session.add(grade)
+
+        db.session.commit()
+
+        percentage = (new_score / attempt.max_score * 100) if attempt.max_score > 0 else 0
+        flash(f'Grade updated successfully! New score: {new_score}/{attempt.max_score} ({percentage:.1f}%)', 'success')
+
+    except ValueError:
+        flash('Invalid score value. Please enter a valid number.', 'error')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating grade: {str(e)}', 'error')
+
+    return redirect(request.referrer or url_for('instructor.view_course_grades', course_id=course.id))

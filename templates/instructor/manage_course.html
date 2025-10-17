@@ -9,6 +9,9 @@
         <a href="{{ url_for('instructor.dashboard') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
+        <a href="{{ url_for('instructor.view_course_grades', course_id=course.id) }}" class="btn btn-success">
+            <i class="fas fa-chart-line"></i> View Grades
+        </a>
         <a href="{{ url_for('instructor.course_analytics', course_id=course.id) }}" class="btn btn-info">
             <i class="fas fa-chart-bar"></i> Analytics
         </a>

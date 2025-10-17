@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Student Grades - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-chart-line"></i> Student Grades - {{ course.title }}</h2>
+                <div>
+                    <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Course
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if student_grades %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users"></i> Enrolled Students ({{ student_grades|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Email</th>
+                                <th>Enrolled</th>
+                                <th>Quizzes Completed</th>
+                                <th>Average Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student_data in student_grades %}
+                                {% set student = student_data.user %}
+                                {% set attempts = student_data.quiz_attempts %}
+                                {% set total_score = 0 %}
+                                {% set total_max = 0 %}
+
+                                {% for attempt_data in attempts %}
+                                    {% set best = attempt_data.best_attempt %}
+                                    {% set total_score = total_score + (best.score if best.score else 0) %}
+                                    {% set total_max = total_max + (best.max_score if best.max_score else 0) %}
+                                {% endfor %}
+
+                                {% set avg_percentage = (total_score / total_max * 100) if total_max > 0 else 0 %}
+
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user-circle text-primary"></i>
+                                        <strong>{{ student.first_name }} {{ student.last_name }}</strong>
+                                    </td>
+                                    <td>{{ student.email }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ student_data.enrollment.enrolled_at.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ attempts|length }} / {{ quizzes|length }}</span>
+                                    </td>
+                                    <td>
+                                        {% if avg_percentage >= 70 %}
+                                            <span class="badge bg-success">{{ "%.1f"|format(avg_percentage) }}%</span>
+                                        {% elif avg_percentage >= 50 %}
+                                            <span class="badge bg-warning">{{ "%.1f"|format(avg_percentage) }}%</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ "%.1f"|format(avg_percentage) }}%</span>
+                                        {% endif %}
+                                        <small class="text-muted">({{ total_score }}/{{ total_max }})</small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#student{{ student.id }}">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Expandable Details Row -->
+                                <tr class="collapse" id="student{{ student.id }}">
+                                    <td colspan="6" class="bg-light">
+                                        <div class="p-3">
+                                            <h6><i class="fas fa-clipboard-list"></i> Quiz Attempts for {{ student.first_name }} {{ student.last_name }}</h6>
+
+                                            {% if attempts %}
+                                                {% for attempt_data in attempts %}
+                                                    {% set quiz = attempt_data.quiz %}
+                                                    {% set all_attempts = attempt_data.attempts %}
+
+                                                    <div class="card mb-3">
+                                                        <div class="card-header">
+                                                            <strong>{{ quiz.title }}</strong>
+                                                            <span class="badge bg-secondary ms-2">{{ all_attempts|length }} attempt(s)</span>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table class="table table-sm table-bordered">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Attempt #</th>
+                                                                        <th>Score</th>
+                                                                        <th>Percentage</th>
+                                                                        <th>Submitted</th>
+                                                                        <th>Status</th>
+                                                                        <th>Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for attempt in all_attempts %}
+                                                                        {% set percentage = (attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0 %}
+                                                                        <tr>
+                                                                            <td>{{ attempt.attempt_number }}</td>
+                                                                            <td><strong>{{ attempt.score }}/{{ attempt.max_score }}</strong></td>
+                                                                            <td>
+                                                                                {% if percentage >= quiz.passing_score %}
+                                                                                    <span class="badge bg-success">{{ "%.1f"|format(percentage) }}%</span>
+                                                                                {% else %}
+                                                                                    <span class="badge bg-danger">{{ "%.1f"|format(percentage) }}%</span>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>
+                                                                                <small>{{ attempt.submitted_at.strftime('%b %d, %Y %I:%M %p') if attempt.submitted_at else 'N/A' }}</small>
+                                                                            </td>
+                                                                            <td>
+                                                                                {% if attempt.is_graded %}
+                                                                                    <span class="badge bg-success">Graded</span>
+                                                                                {% else %}
+                                                                                    <span class="badge bg-warning">Auto-graded</span>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>
+                                                                                <button class="btn btn-sm btn-warning"
+                                                                                        data-bs-toggle="modal"
+                                                                                        data-bs-target="#gradeModal{{ attempt.id }}">
+                                                                                    <i class="fas fa-edit"></i> Edit Grade
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle"></i> This student hasn't attempted any quizzes yet.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No students enrolled in this course yet.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Grade Edit Modals -->
+{% for student_data in student_grades %}
+    {% for attempt_data in student_data.quiz_attempts %}
+        {% for attempt in attempt_data.attempts %}
+            <div class="modal fade" id="gradeModal{{ attempt.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ url_for('instructor.update_quiz_grade', attempt_id=attempt.id) }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-edit"></i> Edit Grade
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <strong>Student:</strong> {{ student_data.user.first_name }} {{ student_data.user.last_name }}<br>
+                                    <strong>Quiz:</strong> {{ attempt_data.quiz.title }}<br>
+                                    <strong>Attempt:</strong> #{{ attempt.attempt_number }}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="score{{ attempt.id }}" class="form-label">Score *</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="score{{ attempt.id }}"
+                                           name="score"
+                                           step="0.1"
+                                           min="0"
+                                           max="{{ attempt.max_score }}"
+                                           value="{{ attempt.score }}"
+                                           required>
+                                    <small class="text-muted">Maximum: {{ attempt.max_score }} points</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="feedback{{ attempt.id }}" class="form-label">Feedback (Optional)</label>
+                                    <textarea class="form-control"
+                                              id="feedback{{ attempt.id }}"
+                                              name="feedback"
+                                              rows="3"
+                                              placeholder="Add feedback for the student...">{% if attempt.grade %}{{ attempt.grade.feedback }}{% endif %}</textarea>
+                                </div>
+
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <small><strong>Note:</strong> Changing this grade will affect the student's overall course score and may impact their course completion status.</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Grade
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
+{% endblock %}
