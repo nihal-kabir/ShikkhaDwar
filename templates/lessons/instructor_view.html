@@ -305,10 +305,14 @@
                     <div class="mb-3">
                         <label for="resourceFile" class="form-label">Select File *</label>
                         <input type="file" class="form-control" id="resourceFile" name="resource_file" required
-                               accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar">
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar"
+                               onchange="validateFileSize(this, 10)">
                         <small class="text-muted">
                             Allowed: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR (Max 10MB)
                         </small>
+                        <div id="fileSizeError" class="text-danger mt-1" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i> File is too large! Maximum size is 10MB.
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-upload"></i> Upload Resource
@@ -351,4 +355,30 @@
         </div>
     </div>
 </div>
+
+<script>
+// Client-side file size validation
+function validateFileSize(input, maxSizeMB) {
+    const maxSize = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+    const errorDiv = document.getElementById('fileSizeError');
+    const submitBtn = input.closest('form').querySelector('button[type="submit"]');
+
+    if (input.files && input.files[0]) {
+        const fileSize = input.files[0].size;
+        const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
+
+        if (fileSize > maxSize) {
+            // Show error
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> File is too large (${fileSizeMB}MB)! Maximum size is ${maxSizeMB}MB. Please compress or choose a smaller file.`;
+            input.value = ''; // Clear the file input
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            // Hide error
+            errorDiv.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    }
+}
+</script>
 {% endblock %}

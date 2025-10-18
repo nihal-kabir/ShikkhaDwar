@@ -125,8 +125,21 @@ def create_lesson(course_id):
                     if file_ext in ALLOWED_DOCUMENT_EXTENSIONS:
                         filename = secure_filename(file.filename)
 
+                        # Check file size
+                        file.seek(0, os.SEEK_END)
+                        file_size = file.tell()
+                        file.seek(0)  # Reset file pointer
+
                         # Upload to Cloudinary or local storage
                         if current_app.config.get('USE_CLOUDINARY'):
+                            # Validate file size for Cloudinary
+                            max_size = current_app.config.get('MAX_CLOUDINARY_FILE_SIZE', 10 * 1024 * 1024)
+                            if file_size > max_size:
+                                size_mb = file_size / (1024 * 1024)
+                                max_mb = max_size / (1024 * 1024)
+                                flash(f'File "{filename}" is too large ({size_mb:.1f}MB). Maximum is {max_mb:.0f}MB. File was skipped.', 'warning')
+                                continue
+
                             result = upload_document(file, course_id=course_id)
                             if result:
                                 file_path = result['secure_url']

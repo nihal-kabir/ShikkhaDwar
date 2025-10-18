@@ -20,6 +20,10 @@ class Config:
     CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
     USE_CLOUDINARY = bool(CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET)
 
+    # File size limits (Cloudinary free tier: 10MB for raw files)
+    MAX_CLOUDINARY_FILE_SIZE = 10 * 1024 * 1024  # 10MB for documents/resources
+    MAX_CLOUDINARY_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB for videos (free tier)
+
     # Database configuration
     DB_HOST = os.environ.get('DB_HOST') or 'localhost'
     DB_PORT = os.environ.get('DB_PORT') or '5432'

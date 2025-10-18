@@ -201,11 +201,23 @@ def add_lesson_resource(lesson_id):
             flash(f'File type .{file_ext} not allowed. Allowed: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR', 'warning')
             return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
 
+        # Check file size (read file to get size)
+        uploaded_file.seek(0, os.SEEK_END)
+        file_size = uploaded_file.tell()
+        uploaded_file.seek(0)  # Reset file pointer
+
         # Initialize Cloudinary
         init_cloudinary()
 
         # Check if Cloudinary is enabled
         if current_app.config.get('USE_CLOUDINARY'):
+            # Validate file size for Cloudinary (10MB limit for free tier)
+            max_size = current_app.config.get('MAX_CLOUDINARY_FILE_SIZE', 10 * 1024 * 1024)
+            if file_size > max_size:
+                size_mb = file_size / (1024 * 1024)
+                max_mb = max_size / (1024 * 1024)
+                flash(f'File is too large ({size_mb:.1f}MB). Maximum file size is {max_mb:.0f}MB. Please compress or split your file.', 'error')
+                return redirect(url_for('lessons.view_lesson', lesson_id=lesson_id))
             # Upload to Cloudinary
             result = upload_document(uploaded_file, course_id=lesson.course_id)
 

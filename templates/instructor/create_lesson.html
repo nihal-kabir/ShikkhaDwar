@@ -64,8 +64,12 @@
                                 <div class="form-group mb-3">
                                     <label for="resources">Upload Resources (Optional)</label>
                                     <input type="file" class="form-control" id="resources" name="resources"
-                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xls,.xlsx">
-                                    <small class="form-text text-muted">PDF, Word, PowerPoint, Excel, or text files.</small>
+                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xls,.xlsx"
+                                           onchange="validateMultipleFileSize(this, 10)">
+                                    <small class="form-text text-muted">PDF, Word, PowerPoint, Excel, or text files (Max 10MB each).</small>
+                                    <div id="multiFileSizeError" class="text-danger mt-1" style="display: none;">
+                                        <i class="fas fa-exclamation-circle"></i> <span id="errorMessage"></span>
+                                    </div>
                                 </div>
 
                                 <div class="alert alert-info">
@@ -97,5 +101,42 @@ document.getElementById('content').addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
 });
+
+// Client-side file size validation for multiple files
+function validateMultipleFileSize(input, maxSizeMB) {
+    const maxSize = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+    const errorDiv = document.getElementById('multiFileSizeError');
+    const errorMessage = document.getElementById('errorMessage');
+    const submitBtn = input.closest('form').querySelector('button[type="submit"]');
+
+    if (input.files && input.files.length > 0) {
+        let hasError = false;
+        let errorFiles = [];
+
+        // Check each file
+        for (let i = 0; i < input.files.length; i++) {
+            const file = input.files[i];
+            const fileSize = file.size;
+            const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
+
+            if (fileSize > maxSize) {
+                hasError = true;
+                errorFiles.push(`"${file.name}" (${fileSizeMB}MB)`);
+            }
+        }
+
+        if (hasError) {
+            // Show error
+            errorDiv.style.display = 'block';
+            errorMessage.innerHTML = `The following files are too large: ${errorFiles.join(', ')}. Maximum size is ${maxSizeMB}MB per file. Please remove or compress these files.`;
+            input.value = ''; // Clear the file input
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            // Hide error
+            errorDiv.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    }
+}
 </script>
 {% endblock %}
