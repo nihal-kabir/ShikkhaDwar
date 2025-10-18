@@ -2,6 +2,8 @@
 
 {% block title %}Manage Course - ShikkhaDwar{% endblock %}
 
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-cog"></i> Manage Course: {{ course.title }}</h2>
@@ -9,9 +11,15 @@
         <a href="{{ url_for('instructor.dashboard') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
+        <a href="{{ url_for('instructor.view_course_grades', course_id=course.id) }}" class="btn btn-success">
+            <i class="fas fa-chart-line"></i> View Grades
+        </a>
         <a href="{{ url_for('instructor.course_analytics', course_id=course.id) }}" class="btn btn-info">
             <i class="fas fa-chart-bar"></i> Analytics
         </a>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cloneCourseModal">
+            <i class="fas fa-copy"></i> Clone Course
+        </button>
     </div>
 </div>
 
@@ -34,15 +42,17 @@
                 <p><strong>Created:</strong> {{ course.created_at.strftime('%B %d, %Y') }}</p>
                 
                 <div class="mt-3">
-                    {% if not course.is_published %}
-                        <button class="btn btn-success">
-                            <i class="fas fa-upload"></i> Publish Course
-                        </button>
-                    {% else %}
-                        <button class="btn btn-warning">
-                            <i class="fas fa-eye-slash"></i> Unpublish Course
-                        </button>
-                    {% endif %}
+                    <form method="POST" action="{{ url_for('instructor.toggle_publish_course', course_id=course.id) }}" style="display: inline;">
+                        {% if not course.is_published %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i> Publish Course
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-eye-slash"></i> Unpublish Course
+                            </button>
+                        {% endif %}
+                    </form>
                 </div>
             </div>
         </div>
@@ -59,20 +69,40 @@
                 {% if lessons %}
                     <div class="list-group">
                         {% for lesson in lessons %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Lesson {{ lesson.order_num }}: {{ lesson.title }}</h6>
-                                    <small class="text-muted">Week {{ lesson.week_number }}</small>
-                                    {% if lesson.video_url %}
-                                        <span class="badge bg-primary ms-2">Video</span>
-                                    {% endif %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Lesson {{ lesson.order_num }}: {{ lesson.title }}</h6>
+                                        <small class="text-muted">Week {{ lesson.week_number }}</small>
+                                        {% if lesson.video_url %}
+                                            <span class="badge bg-primary ms-2">Video</span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}"
+                                           class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{{ url_for('instructor.create_quiz', course_id=course.id, lesson_id=lesson.id) }}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus-circle"></i> Add Quiz
+                                        </a>
+                                    </div>
                                 </div>
-                                <div>
-                                    <a href="{{ url_for('lessons.view_lesson', lesson_id=lesson.id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
+                                {% set lesson_quizzes = quizzes|selectattr('lesson_id', 'equalto', lesson.id)|list %}
+                                {% if lesson_quizzes %}
+                                <div class="mt-2 ps-3">
+                                    <small class="text-muted"><i class="fas fa-question-circle me-1"></i>Quizzes:</small>
+                                    {% for quiz in lesson_quizzes %}
+                                        <div class="d-inline-block ms-2">
+                                            <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}"
+                                               class="badge bg-info text-decoration-none">
+                                                {{ quiz.title }} ({{ quiz.questions|length }} questions)
+                                            </a>
+                                        </div>
+                                    {% endfor %}
                                 </div>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
@@ -95,15 +125,21 @@
                     <div class="list-group">
                         {% for quiz in quizzes %}
                             <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">{{ quiz.title }}</h6>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <h6 class="mb-0">{{ quiz.title }}</h6>
+                                        <span class="badge {{ 'bg-success' if quiz.is_published else 'bg-warning' }} ms-2">
+                                            {{ 'Published' if quiz.is_published else 'Draft' }}
+                                        </span>
+                                    </div>
                                     <small class="text-muted">
-                                        {{ quiz.questions|length }} questions
-                                        {% if quiz.time_limit %} • {{ quiz.time_limit }} minutes{% endif %}
+                                        <i class="fas fa-question"></i> {{ quiz.questions|length }} questions
+                                        {% if quiz.time_limit %} • <i class="fas fa-clock"></i> {{ quiz.time_limit }} min{% endif %}
+                                        • <i class="fas fa-chart-line"></i> Passing: {{ quiz.passing_score }}%
                                     </small>
                                 </div>
                                 <div>
-                                    <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}" 
+                                    <a href="{{ url_for('instructor.manage_quiz', quiz_id=quiz.id) }}"
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-cog"></i> Manage
                                     </a>
@@ -116,8 +152,46 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Announcements -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-bullhorn"></i> Course Announcements ({{ announcements|length }})</h5>
+                <a href="{{ url_for('instructor.create_announcement', course_id=course.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Announcement
+                </a>
+            </div>
+            <div class="card-body">
+                {% if announcements %}
+                    <div class="list-group">
+                        {% for announcement in announcements %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            {{ announcement.title }}
+                                            {% if announcement.is_urgent %}
+                                                <span class="badge bg-danger ms-2">
+                                                    <i class="fas fa-exclamation-triangle"></i> Urgent
+                                                </span>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="mb-1 small">{{ announcement.content[:100] }}{% if announcement.content|length > 100 %}...{% endif %}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> {{ announcement.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No announcements yet. Keep students informed about updates and important information!</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    
+
     <div class="col-md-4">
         <!-- Quick Stats -->
         <div class="card mb-4">
@@ -184,6 +258,51 @@
                         <i class="fas fa-clipboard-check"></i> View Gradebook
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clone Course Confirmation Modal -->
+<div class="modal fade" id="cloneCourseModal" tabindex="-1" aria-labelledby="cloneCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cloneCourseModalLabel">
+                    <i class="fas fa-copy"></i> Clone Course
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clone <strong>{{ course.title }}</strong>?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> The following will be copied:
+                    <ul class="mb-0 mt-2">
+                        <li>Course information and settings</li>
+                        <li>All lessons ({{ lessons|length }}) with content and videos</li>
+                        <li>All quizzes ({{ quizzes|length }}) with questions</li>
+                        <li>All resources attached to lessons</li>
+                    </ul>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>The cloned course will be <strong>unpublished</strong></li>
+                        <li>Course title will have "(Copy)" appended</li>
+                        <li>Student enrollments will <strong>not</strong> be copied</li>
+                        <li>Quiz attempts and grades will <strong>not</strong> be copied</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="{{ url_for('instructor.clone_course', course_id=course.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-copy"></i> Clone Course
+                    </button>
+                </form>
             </div>
         </div>
     </div>

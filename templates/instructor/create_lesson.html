@@ -54,33 +54,24 @@
                             </div>
 
                             <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="order_index">Lesson Order</label>
-                                    <input type="number" class="form-control" id="order_index" name="order_index" 
+                                <div class="form-group mb-3">
+                                    <label for="week_number">Week Number</label>
+                                    <input type="number" class="form-control" id="week_number" name="week_number"
                                            min="1" value="1" required>
-                                    <small class="form-text text-muted">Order in which this lesson appears in the course.</small>
+                                    <small class="form-text text-muted">Which week this lesson belongs to.</small>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="duration">Duration (minutes)</label>
-                                    <input type="number" class="form-control" id="duration" name="duration" 
-                                           min="1" placeholder="30">
-                                    <small class="form-text text-muted">Estimated time to complete this lesson.</small>
-                                </div>
-
-                                <div class="form-group">
+                                <div class="form-group mb-3">
                                     <label for="resources">Upload Resources (Optional)</label>
-                                    <input type="file" class="form-control-file" id="resources" name="resources" 
-                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
-                                    <small class="form-text text-muted">PDF, Word, PowerPoint, or text files.</small>
+                                    <input type="file" class="form-control" id="resources" name="resources"
+                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xls,.xlsx">
+                                    <small class="form-text text-muted">PDF, Word, PowerPoint, Excel, or text files.</small>
                                 </div>
 
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" id="is_preview" name="is_preview">
-                                    <label class="form-check-label" for="is_preview">
-                                        Preview Lesson
-                                    </label>
-                                    <small class="form-text text-muted">Allow non-enrolled students to view this lesson.</small>
+                                <div class="alert alert-info">
+                                    <small>
+                                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Lesson order will be automatically assigned based on the order of creation.
+                                    </small>
                                 </div>
                             </div>
                         </div>

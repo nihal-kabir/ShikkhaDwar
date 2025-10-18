@@ -32,11 +32,11 @@ def take_quiz(quiz_id):
 @login_required
 def submit_quiz(quiz_id):
     # Validate quiz exists
-    Quiz.query.get_or_404(quiz_id)
-    
+    quiz = Quiz.query.get_or_404(quiz_id)
+
     # Get current attempt number
     attempt_number = QuizAttempt.query.filter_by(user_id=session['user_id'], quiz_id=quiz_id).count() + 1
-    
+
     # Create quiz attempt
     attempt = QuizAttempt(
         user_id=session['user_id'],
@@ -45,27 +45,35 @@ def submit_quiz(quiz_id):
         submitted_at=datetime.now(timezone.utc),
         answers=json.dumps(dict(request.form))
     )
-    
+
     # Auto-grade MCQ and True/False questions
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     total_score = 0
     max_score = sum(q.points for q in questions)
-    
+
     for question in questions:
         user_answer = request.form.get(f'question_{question.id}', '')
         if question.question_type in ['mcq', 'true_false']:
             if user_answer == question.correct_answer:
                 total_score += question.points
-    
+
     attempt.score = total_score
     attempt.max_score = max_score
     attempt.is_graded = True  # Auto-graded
-    
+
     db.session.add(attempt)
     db.session.commit()
-    
-    flash(f'Quiz submitted! Score: {total_score}/{max_score}', 'success')
-    return redirect(url_for('student.view_grades'))
+
+    # Calculate percentage
+    percentage = (total_score / max_score * 100) if max_score > 0 else 0
+
+    # Check if passed
+    if percentage >= quiz.passing_score:
+        flash(f'Congratulations! You passed the quiz with {percentage:.1f}% (Score: {total_score}/{max_score})', 'success')
+    else:
+        flash(f'You scored {percentage:.1f}% (Score: {total_score}/{max_score}). Passing score is {quiz.passing_score}%. You can retake the quiz if you have attempts remaining.', 'warning')
+
+    return redirect(url_for('student.view_progress', course_id=quiz.course_id))
 
 @assessments_bp.route('/gradebook/<int:course_id>')
 @login_required

@@ -2,11 +2,13 @@
 
 {% block title %}Instructor Dashboard - ShikkhaDwar{% endblock %}
 
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-chalkboard-teacher"></i> Instructor Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mb-4 dashboard-header">
+    <h2 class="mb-0"><i class="fas fa-chalkboard-teacher"></i> Instructor Dashboard</h2>
     <a href="{{ url_for('instructor.create_course') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Create New Course
+        <i class="fas fa-plus"></i> <span class="btn-text">Create New Course</span>
     </a>
 </div>
 
@@ -82,14 +84,14 @@
                                     </div>
                                 </div>
                                 
-                                <div class="d-flex gap-1 w-100">
-                                    <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}" 
+                                <div class="d-flex gap-1 w-100 course-actions">
+                                    <a href="{{ url_for('instructor.manage_course', course_id=course.id) }}"
                                        class="btn btn-sm btn-primary flex-grow-1">
-                                        <i class="fas fa-cog"></i> Manage
+                                        <i class="fas fa-cog"></i> <span class="btn-text">Manage</span>
                                     </a>
-                                    <a href="{{ url_for('instructor.course_analytics', course_id=course.id) }}" 
-                                       class="btn btn-sm btn-info">
-                                        <i class="fas fa-chart-bar"></i> Analytics
+                                    <a href="{{ url_for('instructor.course_analytics', course_id=course.id) }}"
+                                       class="btn btn-sm btn-info flex-shrink-0">
+                                        <i class="fas fa-chart-bar"></i> <span class="btn-text-short">Analytics</span>
                                     </a>
                                 </div>
                             </div>

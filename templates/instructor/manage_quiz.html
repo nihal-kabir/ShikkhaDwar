@@ -2,16 +2,34 @@
 
 {% block title %}Manage Quiz - {{ quiz.title }}{% endblock %}
 
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-question-circle"></i> Manage Quiz</h2>
                 <div>
-                    <a href="{{ url_for('instructor.create_question', quiz_id=quiz.id) }}" class="btn btn-success">
+                    <form method="POST" action="{{ url_for('instructor.toggle_publish_quiz', quiz_id=quiz.id) }}" style="display: inline;">
+                        {% if not quiz.is_published %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i> Publish Quiz
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-eye-slash"></i> Unpublish Quiz
+                            </button>
+                        {% endif %}
+                    </form>
+                    <a href="{{ url_for('instructor.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-info">
+                        <i class="fas fa-edit"></i> Edit Quiz
+                    </a>
+                    <a href="{{ url_for('instructor.create_question', quiz_id=quiz.id) }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add Question
                     </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteQuizModal">
+                        <i class="fas fa-trash"></i> Delete Quiz
+                    </button>
                     <a href="{{ url_for('instructor.manage_course', course_id=quiz.course_id) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Course
                     </a>
@@ -87,13 +105,10 @@
                                         <td>{{ question.points or 1 }}</td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" onclick="viewQuestion({{ question.id }})">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-outline-warning" onclick="editQuestion({{ question.id }})">
+                                                <a href="{{ url_for('instructor.edit_question', question_id=question.id) }}" class="btn btn-outline-primary btn-sm">
                                                     <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" onclick="deleteQuestion({{ question.id }})">
+                                                </a>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -111,6 +126,125 @@
                             <a href="{{ url_for('instructor.create_question', quiz_id=quiz.id) }}" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add First Question
                             </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Student Attempts -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Student Attempts
+                        <span class="badge bg-info">{{ student_stats|length }} Students</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if student_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student Name</th>
+                                        <th>Email</th>
+                                        <th>Attempts</th>
+                                        <th>Best Score</th>
+                                        <th>Best Percentage</th>
+                                        <th>Latest Attempt</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_id, stats in student_stats.items() %}
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-user-circle text-primary"></i>
+                                                {{ stats.user.first_name }} {{ stats.user.last_name }}
+                                            </td>
+                                            <td>{{ stats.user.email }}</td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ stats.attempt_count }}</span>
+                                                / {{ quiz.max_attempts }}
+                                            </td>
+                                            <td><strong>{{ stats.best_score }} pts</strong></td>
+                                            <td>
+                                                {% if stats.best_percentage >= quiz.passing_score %}
+                                                    <span class="badge bg-success">{{ "%.1f"|format(stats.best_percentage) }}%</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ "%.1f"|format(stats.best_percentage) }}%</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if stats.latest_attempt %}
+                                                    <small class="text-muted">
+                                                        {{ stats.latest_attempt.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                                                    </small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if stats.best_percentage >= quiz.passing_score %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i> Passed
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-exclamation-circle"></i> Below Passing
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- Attempt History (Collapsible) -->
+                                        <tr class="collapse" id="attempts-{{ user_id }}">
+                                            <td colspan="7" class="bg-light">
+                                                <div class="p-3">
+                                                    <h6><i class="fas fa-history"></i> Attempt History</h6>
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Attempt #</th>
+                                                                <th>Score</th>
+                                                                <th>Percentage</th>
+                                                                <th>Time Taken</th>
+                                                                <th>Submitted At</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for attempt in stats.attempts %}
+                                                                <tr>
+                                                                    <td>{{ attempt.attempt_number }}</td>
+                                                                    <td>{{ attempt.score }} pts</td>
+                                                                    <td>
+                                                                        {% set percentage = (attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0 %}
+                                                                        {{ "%.1f"|format(percentage) }}%
+                                                                    </td>
+                                                                    <td>
+                                                                        {% if attempt.time_taken %}
+                                                                            {{ attempt.time_taken }} min
+                                                                        {% else %}
+                                                                            N/A
+                                                                        {% endif %}
+                                                                    </td>
+                                                                    <td>{{ attempt.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Click on a student row to expand and view detailed attempt history.
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                            <h5>No Student Attempts Yet</h5>
+                            <p>Students haven't taken this quiz yet. Make sure the quiz is published!</p>
                         </div>
                     {% endif %}
                 </div>
@@ -221,5 +355,95 @@ function deleteQuestion(questionId) {
         });
     }
 }
+
+// Make student rows clickable to toggle attempt history
+document.addEventListener('DOMContentLoaded', function() {
+    const studentRows = document.querySelectorAll('.table tbody tr:not(.collapse)');
+    studentRows.forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+            // Get the next sibling (the collapsible row)
+            const detailRow = this.nextElementSibling;
+            if (detailRow && detailRow.classList.contains('collapse')) {
+                // Toggle the collapse using Bootstrap's Collapse API
+                const bsCollapse = new bootstrap.Collapse(detailRow, {
+                    toggle: true
+                });
+            }
+        });
+    });
+});
 </script>
+
+<!-- Delete Quiz Modal -->
+<div class="modal fade" id="deleteQuizModal" tabindex="-1" aria-labelledby="deleteQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteQuizModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Delete Quiz
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>"{{ quiz.title }}"</strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>All {{ questions|length }} question(s) will be deleted</li>
+                        <li>All student attempts and scores will be lost</li>
+                        <li>This action cannot be undone</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="{{ url_for('instructor.delete_quiz', quiz_id=quiz.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Quiz
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Question Modals -->
+{% for question in questions %}
+<div class="modal fade" id="deleteQuestionModal{{ question.id }}" tabindex="-1" aria-labelledby="deleteQuestionModalLabel{{ question.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteQuestionModalLabel{{ question.id }}">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Delete Question
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this question?</p>
+                <div class="card">
+                    <div class="card-body">
+                        <strong>Question {{ loop.index }}:</strong>
+                        <p class="mb-0">{{ question.question_text[:100] }}{% if question.question_text|length > 100 %}...{% endif %}</p>
+                    </div>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i> This action cannot be undone!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form method="POST" action="{{ url_for('instructor.delete_question', question_id=question.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Question
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
 {% endblock %}

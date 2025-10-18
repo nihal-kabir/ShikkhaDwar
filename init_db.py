@@ -26,13 +26,22 @@ def test_postgresql_connection():
         config = Config()
         
         # First connect to postgres database to create our database
-        connection = psycopg2.connect(
-            host=config.DB_HOST,
-            port=config.DB_PORT,
-            user=config.DB_USER,
-            password=config.DB_PASSWORD,
-            database='postgres'  # Connect to default postgres database
-        )
+        # Check if we're connecting to a remote server that requires SSL
+        is_remote = config.DB_HOST not in ['localhost', '127.0.0.1', '::1']
+
+        connection_params = {
+            'host': config.DB_HOST,
+            'port': config.DB_PORT,
+            'user': config.DB_USER,
+            'password': config.DB_PASSWORD,
+            'database': 'postgres'  # Connect to default postgres database
+        }
+
+        # Add SSL mode for remote connections
+        if is_remote:
+            connection_params['sslmode'] = 'require'
+
+        connection = psycopg2.connect(**connection_params)
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = connection.cursor()
         
@@ -50,13 +59,19 @@ def test_postgresql_connection():
         connection.close()
         
         # Test connection to our database
-        test_connection = psycopg2.connect(
-            host=config.DB_HOST,
-            port=config.DB_PORT,
-            user=config.DB_USER,
-            password=config.DB_PASSWORD,
-            database=config.DB_NAME
-        )
+        test_params = {
+            'host': config.DB_HOST,
+            'port': config.DB_PORT,
+            'user': config.DB_USER,
+            'password': config.DB_PASSWORD,
+            'database': config.DB_NAME
+        }
+
+        # Add SSL mode for remote connections
+        if is_remote:
+            test_params['sslmode'] = 'require'
+
+        test_connection = psycopg2.connect(**test_params)
         test_connection.close()
         
         print("PostgreSQL connection successful!")
