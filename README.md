@@ -2,7 +2,7 @@
 
 A modern, easy-to-use Learning Management System for creating and managing online courses.
 
-**Live Demo**: https://shikkhadwar.onrender.com/
+**Live Demo**: https://shikkhadwar-81r2.onrender.com/ (As it deploys from free-tier services, it may take a moment to wake up.)
 
 ## Features
 
