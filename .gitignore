@@ -140,3 +140,4 @@ DEPLOY_CHECKLIST.md
 *.sqlite
 *.sqlite3
 instance/
+logs.txt

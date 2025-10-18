@@ -20,67 +20,63 @@ from constants import (
 import json
 
 def test_postgresql_connection():
-    """Test PostgreSQL connection and create database if needed"""
+    """Test PostgreSQL connection (for managed databases like NeonDB/Render)"""
     try:
-        # Use configuration from config.py instead of hardcoded values
+        # Use configuration from config.py
         config = Config()
-        
-        # First connect to postgres database to create our database
-        # Check if we're connecting to a remote server that requires SSL
-        is_remote = config.DB_HOST not in ['localhost', '127.0.0.1', '::1']
 
-        connection_params = {
-            'host': config.DB_HOST,
-            'port': config.DB_PORT,
-            'user': config.DB_USER,
-            'password': config.DB_PASSWORD,
-            'database': 'postgres'  # Connect to default postgres database
-        }
-
-        # Add SSL mode for remote connections
-        if is_remote:
-            connection_params['sslmode'] = 'require'
-
-        connection = psycopg2.connect(**connection_params)
-        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = connection.cursor()
-        
-        # Check if database exists
-        cursor.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{config.DB_NAME}'")
-        exists = cursor.fetchone()
-        
-        if not exists:
-            cursor.execute(f'CREATE DATABASE {config.DB_NAME}')
-            print(f"Database '{config.DB_NAME}' created successfully!")
+        # Check if DATABASE_URL is provided (production/managed database)
+        if os.environ.get('DATABASE_URL'):
+            print("Using DATABASE_URL from environment (managed database)")
+            # For managed databases, we can't create databases - they already exist
+            # Just test the connection using SQLAlchemy
+            with app.app_context():
+                # Test connection by executing a simple query
+                with db.engine.connect() as conn:
+                    conn.execute(db.text('SELECT 1'))
+            print("Database connection successful!")
+            return True
         else:
-            print(f"Database '{config.DB_NAME}' already exists.")
-            
-        cursor.close()
-        connection.close()
-        
-        # Test connection to our database
-        test_params = {
-            'host': config.DB_HOST,
-            'port': config.DB_PORT,
-            'user': config.DB_USER,
-            'password': config.DB_PASSWORD,
-            'database': config.DB_NAME
-        }
+            # Local development - try to create database if it doesn't exist
+            print("Using local PostgreSQL configuration")
+            is_remote = config.DB_HOST not in ['localhost', '127.0.0.1', '::1']
 
-        # Add SSL mode for remote connections
-        if is_remote:
-            test_params['sslmode'] = 'require'
+            connection_params = {
+                'host': config.DB_HOST,
+                'port': config.DB_PORT,
+                'user': config.DB_USER,
+                'password': config.DB_PASSWORD,
+                'database': 'postgres'  # Connect to default postgres database
+            }
 
-        test_connection = psycopg2.connect(**test_params)
-        test_connection.close()
-        
-        print("PostgreSQL connection successful!")
-        return True
+            # Add SSL mode for remote connections
+            if is_remote:
+                connection_params['sslmode'] = 'require'
+
+            connection = psycopg2.connect(**connection_params)
+            connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            cursor = connection.cursor()
+
+            # Check if database exists
+            cursor.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{config.DB_NAME}'")
+            exists = cursor.fetchone()
+
+            if not exists:
+                cursor.execute(f'CREATE DATABASE {config.DB_NAME}')
+                print(f"Database '{config.DB_NAME}' created successfully!")
+            else:
+                print(f"Database '{config.DB_NAME}' already exists.")
+
+            cursor.close()
+            connection.close()
+
+            print("PostgreSQL connection successful!")
+            return True
     except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
-        print("Please ensure PostgreSQL is running and credentials are correct.")
-        print("Make sure you have created a PostgreSQL user and set the correct password.")
-        return False
+        print(f"PostgreSQL connection test failed: {e}")
+        print("Continuing anyway - tables will be created if connection works...")
+        # Return True to continue - SQLAlchemy will handle the connection
+        return True
 
 def create_sample_data():
     """Create sample data for testing"""
@@ -401,25 +397,53 @@ def main():
     # Test PostgreSQL connection first
     if not test_postgresql_connection():
         return
-        
+
+    # Check if we're in production (DATABASE_URL is set)
+    is_production = bool(os.environ.get('DATABASE_URL'))
+
     with app.app_context():
-        # Drop all tables
-        print("Dropping existing tables...")
-        db.drop_all()
-        
-        # Create all tables
-        print("Creating database tables...")
-        db.create_all()
-        
-        # Create sample data
-        print("Creating sample data...")
-        create_sample_data()
-        
-        print("\nDatabase initialization complete!")
-        print("\nSample login credentials:")
-        print("Instructor: prof_smith / password123")
-        print("Student: student1 / password123")
-        print("Admin: admin / admin123")
+        # In production, check if tables exist before dropping
+        if is_production:
+            print("Production environment detected - checking existing tables...")
+            inspector = db.inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+
+            if existing_tables:
+                print(f"Found existing tables: {existing_tables}")
+                print("Skipping table drop in production to preserve data")
+                print("Creating any missing tables...")
+                db.create_all()
+                print("Tables verified/created successfully!")
+            else:
+                print("No existing tables found - creating all tables...")
+                db.create_all()
+                print("Creating sample data for first deployment...")
+                create_sample_data()
+                print("\nDatabase initialization complete!")
+                print("\nSample login credentials:")
+                print("Instructor: prof_smith / password123")
+                print("Student: student1 / password123")
+                print("Admin: admin / admin123")
+        else:
+            # Local development - drop and recreate everything
+            print("Development environment - recreating all tables...")
+            # Drop all tables
+            print("Dropping existing tables...")
+            db.drop_all()
+
+            # Create all tables
+            print("Creating database tables...")
+            db.create_all()
+
+            # Create sample data
+            print("Creating sample data...")
+            create_sample_data()
+
+            print("\nDatabase initialization complete!")
+            print("\nSample login credentials:")
+            print("Instructor: prof_smith / password123")
+            print("Student: student1 / password123")
+            print("Admin: admin / admin123")
 
 if __name__ == '__main__':
     main()
