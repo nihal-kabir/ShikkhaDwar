@@ -67,7 +67,3 @@ Visit `http://localhost:5000` to access the application.
 ## License
 
 Educational purposes. Free to use and modify.
-
----
-
-**ShikkhaDwar** - Your Gateway to Learning
