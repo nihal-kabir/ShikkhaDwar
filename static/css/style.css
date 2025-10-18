@@ -1,32 +1,70 @@
 /* Custom CSS for University LMS */
 
 :root {
-    --primary-color: #4f46e5;
-    --primary-light: #6366f1;
-    --primary-dark: #3730a3;
+    /* Primary Colors - Soft Blue Theme (Educational & Welcoming) */
+    --primary-color: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #2563eb;
+    --primary-hover: #1d4ed8;
+
+    /* Semantic Colors */
     --secondary-color: #64748b;
     --success-color: #10b981;
+    --success-light: #34d399;
+    --success-dark: #059669;
     --danger-color: #ef4444;
+    --danger-light: #f87171;
+    --danger-dark: #dc2626;
     --warning-color: #f59e0b;
+    --warning-light: #fbbf24;
+    --warning-dark: #d97706;
     --info-color: #06b6d4;
+    --info-light: #22d3ee;
+    --info-dark: #0891b2;
+
+    /* Neutral Colors */
     --light-color: #f8fafc;
+    --lighter-color: #ffffff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
     --dark-color: #000000;
+
+    /* Accent Colors */
     --accent-color: #f97316;
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --accent-light: #fb923c;
+
+    /* Background Colors */
+    --bg-primary: #4f46e5;
+    --bg-secondary: #f8fafc;
+    --bg-light: #ffffff;
+    --bg-gray: #f9fafb;
+
+    /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* Border Radius */
     --border-radius: 0.75rem;
     --border-radius-sm: 0.5rem;
     --border-radius-lg: 1rem;
+
+    /* Transitions */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-in-out;
 }
 
 body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: #f8fafc;
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #000000;
@@ -102,7 +140,7 @@ p, span, div, li {
 
 /* Top Notification Bar */
 .top-bar {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
     font-size: 0.875rem;
     font-weight: 500;
@@ -119,13 +157,22 @@ p, span, div, li {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: rgba(255,255,255,0.1);
     animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
+    0% {
+        left: -100%;
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
 }
 
 /* Modern Navbar */
@@ -202,7 +249,7 @@ p, span, div, li {
 .user-avatar {
     width: 32px;
     height: 32px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -233,7 +280,7 @@ p, span, div, li {
 }
 
 .hero-section {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
     padding: 5rem 0;
     text-align: center;
@@ -274,7 +321,7 @@ p, span, div, li {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     transform: scaleX(0);
     transition: var(--transition);
 }
@@ -323,7 +370,7 @@ p, span, div, li {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: rgba(255,255,255,0.1);
     transition: var(--transition);
 }
 
@@ -332,14 +379,14 @@ p, span, div, li {
 }
 
 .btn-primary {
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: white;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
-    background: var(--gradient-primary);
+    background: var(--primary-hover);
 }
 
 .btn-outline-primary {
@@ -361,7 +408,7 @@ p, span, div, li {
 }
 
 .btn-success:hover {
-    background: #059669;
+    background: var(--success-dark);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
@@ -372,41 +419,41 @@ p, span, div, li {
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background: var(--danger-dark);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
 
 .progress {
     border-radius: 10px;
-    background-color: #e9ecef;
+    background-color: #e5e7eb;
 }
 
 .progress-bar {
     border-radius: 10px;
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
 }
 
 /* Modern progress element styling */
 progress {
     appearance: none;
     border-radius: 10px;
-    background-color: #e9ecef;
+    background-color: #e5e7eb;
     color: var(--primary-color);
 }
 
 progress::-webkit-progress-bar {
-    background-color: #e9ecef;
+    background-color: #e5e7eb;
     border-radius: 10px;
 }
 
 progress::-webkit-progress-value {
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
     border-radius: 10px;
 }
 
 progress::-moz-progress-bar {
-    background: linear-gradient(90deg, var(--primary-color), #0056b3);
+    background: var(--primary-color);
     border-radius: 10px;
 }
 
@@ -447,25 +494,25 @@ progress::-moz-progress-bar {
 }
 
 .alert-success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: #d1fae5;
     color: #065f46;
     border-left: 4px solid var(--success-color);
 }
 
 .alert-danger {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    background: #fee2e2;
     color: #991b1b;
     border-left: 4px solid var(--danger-color);
 }
 
 .alert-warning {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    background: #fef3c7;
     color: #92400e;
     border-left: 4px solid var(--warning-color);
 }
 
 .alert-info {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    background: #dbeafe;
     color: #1e40af;
     border-left: 4px solid var(--info-color);
 }
@@ -482,7 +529,7 @@ progress::-moz-progress-bar {
 
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     outline: none;
 }
 
@@ -494,10 +541,11 @@ progress::-moz-progress-bar {
 
 /* Modern Footer */
 .modern-footer {
-    background: var(--gradient-primary);
+    background: #ffffff;
     position: relative;
     overflow: hidden;
-    color: white;
+    color: var(--gray-700);
+    border-top: 1px solid var(--gray-200);
 }
 
 /* Footer container-fluid padding */
@@ -520,17 +568,6 @@ progress::-moz-progress-bar {
     }
 }
 
-.modern-footer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="white" opacity="0.05"><polygon points="0,100 1000,100 1000,0 0,20"/></svg>') no-repeat top;
-    background-size: cover;
-}
-
 .modern-footer .container {
     position: relative;
     z-index: 1;
@@ -538,45 +575,51 @@ progress::-moz-progress-bar {
 
 .modern-footer h5,
 .modern-footer h6 {
-    color: rgb(0, 0, 0) !important;
+    color: var(--gray-900) !important;
     margin-bottom: 1rem;
+    font-weight: 600;
 }
 
-.modern-footer p,
-.modern-footer .text-light-emphasis {
-    color: rgba(0, 0, 0, 0.9) !important;
+.modern-footer p {
+    color: var(--gray-600) !important;
 }
 
-.modern-footer small,
-.modern-footer .text-light-emphasis {
-    color: rgba(77, 68, 68, 0.8) !important;
+.modern-footer small {
+    color: var(--gray-500) !important;
 }
 
 .footer-brand h5 {
-    color: rgb(63, 54, 54);
+    color: var(--primary-color) !important;
     margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
 }
 
 .footer-links li {
     margin-bottom: 0.5rem;
-    color: rgba(56, 47, 47, 0.9);
+    color: var(--gray-600);
 }
 
 .footer-links a {
-    color: rgba(15, 14, 14, 0.8) !important;
+    color: var(--gray-600) !important;
     text-decoration: none;
     transition: var(--transition);
     font-size: 0.875rem;
+    display: inline-block;
 }
 
 .footer-links a:hover {
-    color: rgb(3, 3, 3) !important;
+    color: var(--primary-color) !important;
     transform: translateX(4px);
 }
 
 .modern-footer .fas,
 .modern-footer .fab {
-    color: rgba(114, 96, 96, 0.9);
+    color: var(--gray-600);
 }
 
 .social-link {
@@ -585,35 +628,45 @@ progress::-moz-progress-bar {
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgb(255, 255, 255);
+    background: var(--gray-100);
+    color: var(--gray-700);
     border-radius: 50%;
     text-decoration: none;
     transition: var(--transition);
-    backdrop-filter: blur(10px);
+    border: 1px solid var(--gray-200);
 }
 
 .social-link:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--primary-color);
     color: white;
     transform: translateY(-2px);
+    border-color: var(--primary-color);
 }
 
 .newsletter-form .form-control {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgb(80, 76, 76);
-    backdrop-filter: blur(10px);
+    background: var(--gray-50);
+    border: 1px solid var(--gray-300);
+    color: var(--gray-900);
 }
 
 .newsletter-form .form-control::placeholder {
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--gray-400);
 }
 
 .newsletter-form .form-control:focus {
-    background: rgba(20, 20, 20, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: none;
+    background: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.newsletter-form .btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+}
+
+.newsletter-form .btn:hover {
+    background: var(--primary-hover);
 }
 
 .form-select {
@@ -683,8 +736,8 @@ progress::-moz-progress-bar {
 }
 
 .certificate {
-    background: linear-gradient(135deg, #fff, #f8f9fa);
-    border: 2px solid var(--primary-color);
+    background: #ffffff;
+    border: 3px solid var(--primary-color);
     border-radius: 15px;
     padding: 3rem;
     text-align: center;
@@ -731,16 +784,17 @@ progress::-moz-progress-bar {
 
 /* Progress Page Styles */
 .progress-header {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+    background: rgba(59, 130, 246, 0.05);
     border-radius: var(--border-radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .progress-icon {
     width: 60px;
     height: 60px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -764,7 +818,7 @@ progress::-moz-progress-bar {
 }
 
 .modern-lessons-card .card-header {
-    background: var(--gradient-primary) !important;
+    background: var(--primary-color) !important;
     border: none;
     padding: 1.5rem;
 }
@@ -796,7 +850,7 @@ progress::-moz-progress-bar {
 .week-number {
     width: 40px;
     height: 40px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -823,7 +877,7 @@ progress::-moz-progress-bar {
 }
 
 .lesson-item:hover {
-    background: rgba(79, 70, 229, 0.02);
+    background: rgba(59, 130, 246, 0.02);
     margin: 0 -1rem;
     padding: 1rem;
     border-radius: var(--border-radius-sm);
@@ -872,7 +926,7 @@ progress::-moz-progress-bar {
 }
 
 .modern-badge.success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: #d1fae5;
     color: #065f46;
 }
 
@@ -890,7 +944,7 @@ progress::-moz-progress-bar {
 .empty-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    background: #f1f5f9;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -981,7 +1035,7 @@ progress::-moz-progress-bar {
 
 .stat-item {
     padding: 1rem;
-    background: rgba(79, 70, 229, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border-radius: var(--border-radius-sm);
     margin-bottom: 0.5rem;
 }
@@ -992,9 +1046,10 @@ progress::-moz-progress-bar {
 }
 
 .completion-celebration {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    background: #d1fae5;
     border-radius: var(--border-radius);
     padding: 2rem;
+    border: 2px solid var(--success-color);
 }
 
 .celebration-icon {
@@ -1039,7 +1094,7 @@ progress::-moz-progress-bar {
 .activity-icon {
     width: 32px;
     height: 32px;
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1113,6 +1168,128 @@ progress::-moz-progress-bar {
     justify-content: center;
     margin: 0 auto 1rem;
     color: var(--secondary-color);
+}
+
+/* Lesson Sidebar Styles */
+.lesson-sidebar-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.lesson-sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
+    transition: var(--transition);
+    position: relative;
+    background: white;
+}
+
+.lesson-sidebar-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-sidebar-item:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.lesson-sidebar-item:hover .lesson-sidebar-label,
+.lesson-sidebar-item:hover .lesson-sidebar-title {
+    color: white;
+}
+
+.lesson-sidebar-item:hover .lesson-sidebar-number {
+    background: white;
+    color: var(--primary-color);
+}
+
+.lesson-sidebar-item:hover .lesson-sidebar-arrow {
+    color: white;
+    transform: translateX(4px);
+}
+
+.lesson-sidebar-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--gray-100);
+    color: var(--primary-color);
+    border-radius: 50%;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+    position: relative;
+}
+
+.lesson-sidebar-number i {
+    position: absolute;
+    font-size: 0.75rem;
+    opacity: 0.5;
+}
+
+.lesson-sidebar-number span {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.lesson-sidebar-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-sidebar-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+    transition: var(--transition);
+}
+
+.lesson-sidebar-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-900);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: var(--transition);
+}
+
+.lesson-sidebar-arrow {
+    margin-left: 0.75rem;
+    color: var(--gray-400);
+    font-size: 0.75rem;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+/* Active lesson indicator (optional - for current lesson) */
+.lesson-sidebar-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid var(--primary-color);
+}
+
+.lesson-sidebar-item.active .lesson-sidebar-number {
+    background: var(--primary-color);
+    color: white;
+}
+
+.lesson-sidebar-item.active .lesson-sidebar-title {
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 /* Responsive Button Optimizations */

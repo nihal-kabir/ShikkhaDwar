@@ -97,7 +97,7 @@
                                                 {{ attempt.score }}%
                                             </span>
                                         </td>
-                                        <td>{{ attempt.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>{{ attempt.submitted_at.strftime('%Y-%m-%d %H:%M') if attempt.submitted_at else attempt.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                         <td>
                                             {% if attempt.score >= 70 %}
                                                 <span class="badge badge-success">Passed</span>

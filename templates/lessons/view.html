@@ -170,16 +170,27 @@
                 <div class="card-header">
                     <h6><i class="fas fa-list"></i> Other Lessons</h6>
                 </div>
-                <div class="card-body">
-                    {% for other_lesson in lesson.course.lessons|sort(attribute='order_num') %}
-                        {% if other_lesson.id != lesson.id %}
-                            <a href="{{ url_for('lessons.view_lesson', lesson_id=other_lesson.id) }}" 
-                               class="d-block mb-2 text-decoration-none">
-                                <small class="text-muted">Lesson {{ other_lesson.order_num }}:</small><br>
-                                {{ other_lesson.title }}
-                            </a>
-                        {% endif %}
-                    {% endfor %}
+                <div class="card-body p-0">
+                    <div class="lesson-sidebar-list">
+                        {% for other_lesson in lesson.course.lessons|sort(attribute='order_num') %}
+                            {% if other_lesson.id != lesson.id %}
+                                <a href="{{ url_for('lessons.view_lesson', lesson_id=other_lesson.id) }}"
+                                   class="lesson-sidebar-item">
+                                    <div class="lesson-sidebar-number">
+                                        <i class="fas fa-play-circle"></i>
+                                        <span>{{ other_lesson.order_num }}</span>
+                                    </div>
+                                    <div class="lesson-sidebar-content">
+                                        <div class="lesson-sidebar-label">Lesson {{ other_lesson.order_num }}</div>
+                                        <div class="lesson-sidebar-title">{{ other_lesson.title }}</div>
+                                    </div>
+                                    <div class="lesson-sidebar-arrow">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         {% endif %}
