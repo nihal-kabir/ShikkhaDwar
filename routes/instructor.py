@@ -9,6 +9,7 @@ from constants import (
 )
 import os
 import json
+from cloudinary_utils import upload_document, upload_video, init_cloudinary
 
 instructor_bp = Blueprint('instructor', __name__)
 
@@ -114,8 +115,8 @@ def create_lesson(course_id):
         # Handle file uploads
         uploaded_files = request.files.getlist('resources')
         if uploaded_files:
-            resources_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'resources')
-            os.makedirs(resources_dir, exist_ok=True)
+            # Initialize Cloudinary
+            init_cloudinary()
 
             for file in uploaded_files:
                 if file and file.filename:
@@ -123,19 +124,31 @@ def create_lesson(course_id):
                     file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
                     if file_ext in ALLOWED_DOCUMENT_EXTENSIONS:
                         filename = secure_filename(file.filename)
-                        # Add timestamp to avoid name conflicts
-                        import time
-                        timestamp = str(int(time.time()))
-                        unique_filename = f"{timestamp}_{filename}"
-                        file_path = os.path.join(resources_dir, unique_filename)
 
-                        # Save the file
-                        file.save(file_path)
+                        # Upload to Cloudinary or local storage
+                        if current_app.config.get('USE_CLOUDINARY'):
+                            result = upload_document(file, course_id=course_id)
+                            if result:
+                                file_path = result['secure_url']
+                                unique_filename = result.get('original_filename', filename)
+                            else:
+                                flash(f'Error uploading {filename} to cloud storage.', 'warning')
+                                continue
+                        else:
+                            # Fallback to local storage
+                            resources_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'resources')
+                            os.makedirs(resources_dir, exist_ok=True)
+
+                            import time
+                            timestamp = str(int(time.time()))
+                            unique_filename = f"{timestamp}_{filename}"
+                            file_path = os.path.join(resources_dir, unique_filename)
+                            file.save(file_path)
 
                         # Create resource record
                         resource = Resource(
                             title=filename,
-                            filename=filename,
+                            filename=unique_filename,
                             file_path=file_path,
                             file_type=file_ext,
                             lesson_id=lesson.id

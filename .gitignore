@@ -134,6 +134,7 @@ LMS_IMPLEMENTATION_GUIDE.md
 test_clone_feature.md
 DEPLOYMENT.md
 DEPLOY_CHECKLIST.md
+CLOUDINARY_SETUP.md
 
 # Database
 *.db

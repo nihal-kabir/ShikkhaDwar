@@ -22,7 +22,14 @@ services:
       - key: UPLOAD_FOLDER
         value: uploads
       - key: MAX_CONTENT_LENGTH
-        value: 16777216
+        value: 52428800
+      # Cloudinary Configuration - Add your credentials in Render Dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false  # Set manually in dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false  # Set manually in dashboard
     autoDeploy: true
     healthCheckPath: /
 
