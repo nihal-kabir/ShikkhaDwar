@@ -25,13 +25,16 @@ class Config:
     DATABASE_URL = os.environ.get('DATABASE_URL')
 
     if DATABASE_URL:
-        # If DATABASE_URL is provided (e.g., from Render), use it and fix SSL mode
+        # If DATABASE_URL is provided (e.g., from Render/NeonDB), use it
+        # Fix postgres:// to postgresql:// for compatibility
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-        # Add sslmode parameter if connecting to remote database
-        if 'sslmode' not in DATABASE_URL:
+
+        # Ensure SSL mode is set for production databases (NeonDB, Render, etc.)
+        if 'sslmode' not in DATABASE_URL and 'localhost' not in DATABASE_URL:
             separator = '&' if '?' in DATABASE_URL else '?'
             DATABASE_URL = f"{DATABASE_URL}{separator}sslmode=require"
+
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
         # Build from individual components for local development

@@ -13,9 +13,27 @@ A modern, easy-to-use Learning Management System for creating and managing onlin
 - **Certificates** - Automatic certificate generation on course completion
 - **User Roles** - Students, Instructors, and Administrators
 
-## Quick Start
+## 🚀 Deployment
 
-### Installation
+Ready to deploy? We've made it easy!
+
+**Deploy to Render + NeonDB:**
+- ✅ Pre-configured for Render deployment
+- ✅ Ready for NeonDB PostgreSQL
+- ✅ Auto-deploy from `deploy` branch
+- ✅ Environment variables ready
+
+**Quick Deploy:**
+1. See [DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md) for quick setup
+2. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guide
+
+## Quick Start (Local Development)
+
+### Automated Setup (Recommended)
+- **Windows**: Run `run.bat`
+- **Mac/Linux**: Run `./run.sh`
+
+### Manual Installation
 
 1. **Clone and setup**
    ```bash
@@ -40,21 +58,18 @@ A modern, easy-to-use Learning Management System for creating and managing onlin
 
 Visit `http://localhost:5000` to access the application.
 
-### Automated Setup
-- **Windows**: Run `run.bat`
-- **Mac/Linux**: Run `./run.sh`
-
 ## Requirements
 
-- Python 3.8+
+- Python 3.11+
 - PostgreSQL
 - Modern web browser
 
 ## Tech Stack
 
-- **Backend**: Flask, SQLAlchemy
-- **Database**: PostgreSQL
+- **Backend**: Flask, SQLAlchemy, Gunicorn
+- **Database**: PostgreSQL (NeonDB for production)
 - **Frontend**: Bootstrap, JavaScript
+- **Deployment**: Render (Backend), NeonDB (Database)
 
 ## User Roles
 
@@ -63,6 +78,34 @@ Visit `http://localhost:5000` to access the application.
 **Instructors**: Create courses, upload content, grade assessments, view analytics
 
 **Administrators**: Manage users and access system-wide analytics
+
+## Project Structure
+
+```
+ShikkhaDwar/
+├── app.py                 # Main application entry
+├── config.py             # Configuration settings
+├── models.py             # Database models
+├── init_db.py            # Database initialization
+├── routes/               # Application routes
+├── templates/            # HTML templates
+├── static/               # CSS, JS, images
+├── uploads/              # User uploads
+├── build.sh              # Render build script
+├── render.yaml           # Render deployment config
+├── Procfile              # Process configuration
+├── requirements.txt      # Python dependencies
+└── runtime.txt           # Python version
+
+Documentation:
+├── README.md             # This file
+├── DEPLOYMENT.md         # Detailed deployment guide
+└── DEPLOY_CHECKLIST.md   # Quick deployment checklist
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

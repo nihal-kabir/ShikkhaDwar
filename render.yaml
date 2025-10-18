@@ -1,0 +1,37 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: shikkhadwar-backend
+    runtime: python
+    plan: free
+    region: oregon
+    branch: deploy
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shikkhadwar-db
+          property: connectionString
+      - key: UPLOAD_FOLDER
+        value: uploads
+      - key: MAX_CONTENT_LENGTH
+        value: 16777216
+    autoDeploy: true
+    healthCheckPath: /
+
+databases:
+  # Note: Render's free PostgreSQL service can be used for development
+  # For production with NeonDB, remove this database section and manually
+  # set the DATABASE_URL environment variable in Render dashboard
+  - name: shikkhadwar-db
+    plan: free
+    databaseName: lms_db
+    user: lms_user
+    region: oregon
