@@ -77,6 +77,54 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Password reset page"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        # Validate inputs
+        if not email:
+            flash('Please enter your email address.', 'error')
+            return render_template('auth/forgot_password.html')
+
+        if not new_password:
+            flash('Please enter a new password.', 'error')
+            return render_template('auth/forgot_password.html')
+
+        if len(new_password) < 6:
+            flash('Password must be at least 6 characters long.', 'error')
+            return render_template('auth/forgot_password.html')
+
+        if new_password != confirm_password:
+            flash('Passwords do not match!', 'error')
+            return render_template('auth/forgot_password.html')
+
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            # Don't reveal if email exists or not (security best practice)
+            # But show success message anyway
+            flash('If an account exists with this email, the password has been reset. Please try logging in with your new password.', 'success')
+            return redirect(url_for('auth.login'))
+
+        # Update password
+        try:
+            user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+
+            flash(f'Password reset successful for {user.username}! You can now login with your new password.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'error')
+            return render_template('auth/forgot_password.html')
+
+    return render_template('auth/forgot_password.html')
+
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
