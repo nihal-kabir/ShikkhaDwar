@@ -32,6 +32,29 @@ body {
     color: #000000;
 }
 
+/* Full-width container support */
+.container-fluid {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* Adjust for very large screens */
+@media (min-width: 1400px) {
+    .container-fluid {
+        padding-left: 3rem;
+        padding-right: 3rem;
+    }
+}
+
+/* Adjust for small screens */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
 /* Ensure text readability */
 .text-muted {
     color: #333333 !important;
@@ -112,6 +135,26 @@ p, span, div, li {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
+}
+
+/* Navbar container-fluid padding */
+.navbar .container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+@media (min-width: 1400px) {
+    .navbar .container-fluid {
+        padding-left: 3rem;
+        padding-right: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 .navbar-brand {
@@ -455,6 +498,26 @@ progress::-moz-progress-bar {
     position: relative;
     overflow: hidden;
     color: white;
+}
+
+/* Footer container-fluid padding */
+.modern-footer .container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+@media (min-width: 1400px) {
+    .modern-footer .container-fluid {
+        padding-left: 3rem;
+        padding-right: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-footer .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 .modern-footer::before {
@@ -1052,38 +1115,185 @@ progress::-moz-progress-bar {
     color: var(--secondary-color);
 }
 
+/* Responsive Button Optimizations */
+@media (max-width: 576px) {
+    /* Reduce button padding on extra small screens */
+    .btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.8125rem;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    /* Make header buttons stack properly */
+    .dashboard-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0 !important;
+    }
+
+    .dashboard-header .btn,
+    .dashboard-header > div {
+        width: 100%;
+    }
+
+    .dashboard-header .btn {
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Course card action buttons - improve layout */
+    .course-actions {
+        gap: 0.5rem !important;
+        flex-wrap: nowrap;
+    }
+
+    .course-actions.mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Ensure flex-grow buttons work properly */
+    .btn.flex-grow-1 {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .btn.flex-shrink-0 {
+        flex-shrink: 0;
+    }
+
+    /* Optimize button text visibility */
+    .btn-sm .fas,
+    .btn-sm .fab {
+        margin-right: 0.25rem;
+    }
+
+    /* Hide button text on very small screens, keep icons */
+    .btn-text-short {
+        display: none;
+    }
+
+    /* Full width buttons in cards for better touch targets */
+    .card .btn-sm {
+        white-space: nowrap;
+    }
+
+    /* Quick Actions buttons */
+    .d-grid.gap-2 {
+        gap: 0.75rem !important;
+    }
+
+    /* Stats cards - adjust layout */
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+    }
+
+    .stats-label {
+        font-size: 0.8rem;
+    }
+
+    /* Improve touch targets for mobile */
+    .btn {
+        min-height: 44px;
+    }
+
+    .btn-sm {
+        min-height: 38px;
+    }
+}
+
+/* Extra small screens - hide some button text */
+@media (max-width: 400px) {
+    /* On very small screens, hide text for secondary buttons */
+    .btn-info .btn-text-short,
+    .btn-success .btn-text-short {
+        display: none;
+    }
+
+    /* Reduce header title size */
+    .dashboard-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-header h2 .fas {
+        font-size: 1rem;
+    }
+
+    /* Make buttons more compact */
+    .btn {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.7rem;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-section {
         text-align: center;
     }
-    
+
     .card-body {
         padding: 1rem;
     }
-    
+
     .btn-group-vertical .btn {
         margin-bottom: 0.5rem;
     }
-    
+
     .progress-header {
         padding: 1.5rem;
     }
-    
+
     .progress-icon {
         width: 48px;
         height: 48px;
         font-size: 1.25rem;
     }
-    
+
     .week-header,
     .lessons-list {
         padding-left: 1rem;
         padding-right: 1rem;
     }
-    
+
     .lesson-item:hover {
         margin: 0 -0.5rem;
         padding: 1rem 0.5rem;
+    }
+
+    /* Tablet optimizations */
+    .btn {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.85rem;
+    }
+
+    /* Improve button spacing in course cards */
+    .card .d-flex.gap-1 {
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Medium screens - adjust button sizes slightly */
+    .btn {
+        padding: 0.7rem 1.35rem;
+        font-size: 0.875rem;
     }
 }
 

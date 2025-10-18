@@ -2,12 +2,14 @@
 
 {% block title %}Student Dashboard - ShikkhaDwar{% endblock %}
 
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-tachometer-alt"></i> Student Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mb-4 dashboard-header">
+    <h2 class="mb-0"><i class="fas fa-tachometer-alt"></i> Student Dashboard</h2>
     <div>
         <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Browse Courses
+            <i class="fas fa-plus"></i> <span class="btn-text">Browse Courses</span>
         </a>
     </div>
 </div>
@@ -36,22 +38,22 @@
                                             <small class="text-muted">{{ "%.0f"|format(enrollment.progress_percentage) }}% complete</small>
                                         </div>
                                         
-                                        <div class="d-flex gap-1 w-100 mb-2">
+                                        <div class="d-flex gap-1 w-100 mb-2 course-actions">
                                             <a href="{{ url_for('student.view_progress', course_id=enrollment.course.id) }}"
                                                class="btn btn-sm btn-primary flex-grow-1">
-                                                <i class="fas fa-play"></i> Continue
+                                                <i class="fas fa-play"></i> <span class="btn-text">Continue</span>
                                             </a>
                                             {% if enrollment.progress_percentage == 100 %}
                                                 <a href="{{ url_for('student.download_certificate', course_id=enrollment.course.id) }}"
-                                                   class="btn btn-sm btn-success">
-                                                    <i class="fas fa-download"></i> Certificate
+                                                   class="btn btn-sm btn-success flex-shrink-0">
+                                                    <i class="fas fa-download"></i> <span class="btn-text-short">Cert</span>
                                                 </a>
                                             {% endif %}
                                         </div>
                                         <button type="button" class="btn btn-sm btn-outline-danger w-100"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#unenrollModal{{ enrollment.course.id }}">
-                                            <i class="fas fa-sign-out-alt"></i> Unenroll
+                                            <i class="fas fa-sign-out-alt"></i> <span class="btn-text">Unenroll</span>
                                         </button>
                                     </div>
                                 </div>
